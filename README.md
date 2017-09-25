@@ -1,5 +1,5 @@
-# TreeEditDistance
-Tree Edit Distance
+# CompressedTreeEditDistance
+Compressed Tree Edit Distance
 
 Shaofeng Jiang
 
