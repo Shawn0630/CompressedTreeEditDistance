@@ -1,0 +1,228 @@
+CompressedTree A
+compressedTreeSize = 8
+ID: 0 label: B
+Root
+childrenNum: 3
+1 2 7 
+subTreeSize: 8
+subTreeSizeSum: 21
+leftmostForestNum: 18
+rightmostForestNum: 16
+specialmostForestNum: 23
+
+ID: 1 label: F
+parent is 0
+childrenNum: 0
+
+subTreeSize: 1
+subTreeSizeSum: 1
+leftmostForestNum: 1
+rightmostForestNum: 1
+specialmostForestNum: 1
+
+ID: 2 label: E
+parent is 0
+childrenNum: 2
+3 4 
+subTreeSize: 5
+subTreeSizeSum: 11
+leftmostForestNum: 9
+rightmostForestNum: 7
+specialmostForestNum: 9
+
+ID: 3 label: F
+parent is 2
+childrenNum: 0
+
+subTreeSize: 1
+subTreeSizeSum: 1
+leftmostForestNum: 1
+rightmostForestNum: 1
+specialmostForestNum: 1
+
+ID: 4 label: F
+parent is 2
+childrenNum: 2
+5 6 
+subTreeSize: 3
+subTreeSizeSum: 5
+leftmostForestNum: 4
+rightmostForestNum: 4
+specialmostForestNum: 4
+
+ID: 5 label: H
+parent is 4
+childrenNum: 0
+
+subTreeSize: 1
+subTreeSizeSum: 1
+leftmostForestNum: 1
+rightmostForestNum: 1
+specialmostForestNum: 1
+
+ID: 6 label: E
+parent is 4
+childrenNum: 0
+
+subTreeSize: 1
+subTreeSizeSum: 1
+leftmostForestNum: 1
+rightmostForestNum: 1
+specialmostForestNum: 1
+
+ID: 7 label: I
+parent is 0
+childrenNum: 0
+
+subTreeSize: 1
+subTreeSizeSum: 1
+leftmostForestNum: 1
+rightmostForestNum: 1
+specialmostForestNum: 1
+
+original_to_compressed
+0 0 0 0 1 1 1 2 3 4 4 4 4 5 6 7 7 7 
+compressed_to_original
+4 node(s) compressed to one node, they are 0(B) 1(C) 2(D) 3(E) 
+3 node(s) compressed to one node, they are 4(F) 5(G) 6(H) 
+1 node(s) compressed to one node, they are 7(E) 
+1 node(s) compressed to one node, they are 8(F) 
+4 node(s) compressed to one node, they are 9(F) 10(H) 11(F) 12(G) 
+1 node(s) compressed to one node, they are 13(H) 
+1 node(s) compressed to one node, they are 14(E) 
+3 node(s) compressed to one node, they are 15(I) 16(J) 17(K) 
+preL_to_preR
+0 7 2 6 3 5 4 1 
+preL_to_postL
+7 0 5 1 4 2 3 6 
+preL_to_postR
+7 6 5 4 3 2 1 0 
+preL_to_lid
+1 1 3 3 5 5 6 7 
+preL_to_rid
+7 1 6 3 6 5 6 7 
+preL_to_ln
+-1 -1 1 1 3 3 5 6 
+preR_to_ln
+-1 -1 1 1 1 4 5 6 
+preL_to_sumDelCost
+18 3 8 1 6 1 1 3 
+preL_to_sumInsCost
+18 3 8 1 6 1 1 3 preL_to_DelCost
+4 3 1 1 4 1 1 3 
+preL_to_InsCost
+4 3 1 1 4 1 1 3 
+CompressedTree B
+compressedTreeSize = 8
+ID: 0 label: B
+Root
+childrenNum: 3
+1 2 7 
+subTreeSize: 8
+subTreeSizeSum: 21
+leftmostForestNum: 18
+rightmostForestNum: 16
+specialmostForestNum: 23
+
+ID: 1 label: F
+parent is 0
+childrenNum: 0
+
+subTreeSize: 1
+subTreeSizeSum: 1
+leftmostForestNum: 1
+rightmostForestNum: 1
+specialmostForestNum: 1
+
+ID: 2 label: E
+parent is 0
+childrenNum: 2
+3 4 
+subTreeSize: 5
+subTreeSizeSum: 11
+leftmostForestNum: 9
+rightmostForestNum: 7
+specialmostForestNum: 9
+
+ID: 3 label: F
+parent is 2
+childrenNum: 0
+
+subTreeSize: 1
+subTreeSizeSum: 1
+leftmostForestNum: 1
+rightmostForestNum: 1
+specialmostForestNum: 1
+
+ID: 4 label: F
+parent is 2
+childrenNum: 2
+5 6 
+subTreeSize: 3
+subTreeSizeSum: 5
+leftmostForestNum: 4
+rightmostForestNum: 4
+specialmostForestNum: 4
+
+ID: 5 label: F
+parent is 4
+childrenNum: 0
+
+subTreeSize: 1
+subTreeSizeSum: 1
+leftmostForestNum: 1
+rightmostForestNum: 1
+specialmostForestNum: 1
+
+ID: 6 label: E
+parent is 4
+childrenNum: 0
+
+subTreeSize: 1
+subTreeSizeSum: 1
+leftmostForestNum: 1
+rightmostForestNum: 1
+specialmostForestNum: 1
+
+ID: 7 label: I
+parent is 0
+childrenNum: 0
+
+subTreeSize: 1
+subTreeSizeSum: 1
+leftmostForestNum: 1
+rightmostForestNum: 1
+specialmostForestNum: 1
+
+original_to_compressed
+0 1 2 3 4 5 6 7 
+compressed_to_original
+1 node(s) compressed to one node, they are 0(B) 
+1 node(s) compressed to one node, they are 1(F) 
+1 node(s) compressed to one node, they are 2(E) 
+1 node(s) compressed to one node, they are 3(F) 
+1 node(s) compressed to one node, they are 4(F) 
+1 node(s) compressed to one node, they are 5(F) 
+1 node(s) compressed to one node, they are 6(E) 
+1 node(s) compressed to one node, they are 7(I) 
+preL_to_preR
+0 7 2 6 3 5 4 1 
+preL_to_postL
+7 0 5 1 4 2 3 6 
+preL_to_postR
+7 6 5 4 3 2 1 0 
+preL_to_lid
+1 1 3 3 5 5 6 7 
+preL_to_rid
+7 1 6 3 6 5 6 7 
+preL_to_ln
+-1 -1 1 1 3 3 5 6 
+preR_to_ln
+-1 -1 1 1 1 4 5 6 
+preL_to_sumDelCost
+8 1 5 1 3 1 1 1 
+preL_to_sumInsCost
+8 1 5 1 3 1 1 1 preL_to_DelCost
+1 1 1 1 1 1 1 1 
+preL_to_InsCost
+1 1 1 1 1 1 1 1 
