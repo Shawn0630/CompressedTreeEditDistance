@@ -81,6 +81,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   ASSERT_EQ(\
     tc.getTreeDistance_LL(),\
     2);
+  ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
+    2);
   cout << "Operation count: " << map->getCount() << endl;
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
@@ -121,6 +124,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   ASSERT_EQ(\
     tc.getTreeDistance_LL(),\
     1); 
+  ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
+    1);
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     1); 
@@ -163,6 +169,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     tc.getTreeDistance_LL(),\
     2); 
   ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
+    2);
+  ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     2); 
   cout << map->toString();
@@ -202,6 +211,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     3);
   ASSERT_EQ(\
     tc.getTreeDistance_LL(),\
+    3);
+  ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
     3);
   cout << map->toString();
   cout << "Operation count: " << map->getCount() << endl;
@@ -247,6 +259,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     tc.getTreeDistance_LL(),\
     3);
   ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
+    3);
+  ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     3);
   cout << map->toString();
@@ -287,6 +302,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     tc.getTreeDistance_LL(),\
     12);
   ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
+    12);
+  ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     12);
   cout << "Pass" << endl; 
@@ -323,6 +341,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     13);
   ASSERT_EQ(\
     tc.getTreeDistance_LL(),\
+    13);
+  ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
     13);
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
@@ -363,6 +384,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     tc.getTreeDistance_LL(),\
     7);
   ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
+    7);
+  ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     7);
   cout << "Pass" << endl;
@@ -399,6 +423,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     6);
   ASSERT_EQ(\
     tc.getTreeDistance_LL(),\
+    6);
+  ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
     6);
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
@@ -439,6 +466,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     tc.getTreeDistance_LL(),\
     5);
   ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
+    5);
+  ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     5);
   cout << "Pass" << endl;
@@ -475,6 +505,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     2);
   ASSERT_EQ(\
     tc.getTreeDistance_LL(),\
+    2);
+  ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
     2);
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
@@ -516,6 +549,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     tc.getTreeDistance_LL(),\
     2);
   ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
+    2);
+  ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     2);
   cout << "Pass" << endl;
@@ -551,6 +587,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     4);
   ASSERT_EQ(\
     tc.getTreeDistance_LL(),\
+    4);
+  ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
     4); 
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
@@ -589,6 +628,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     1);
   ASSERT_EQ(\
     tc.getTreeDistance_LL(),\
+    1);
+  ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
     1); 
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
@@ -627,6 +669,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     3);
   ASSERT_EQ(\
     tc.getTreeDistance_LL(),\
+    3);
+  ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
     3); 
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
@@ -665,6 +710,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     6);
   ASSERT_EQ(\
     tc.getTreeDistance_LL(),\
+    6);
+  ASSERT_EQ(\
+    tc.getTreeDistance_LL_compressed(),\
     6); 
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\

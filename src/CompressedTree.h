@@ -10,6 +10,7 @@ public:
 	int getTreeSize(void) const;
 	Node* operator[](int);
 
+	vector<Node*> getPreL(void);
 
 	string toString(void) const;
 

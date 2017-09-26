@@ -89,7 +89,7 @@ CompressedTree::CompressedTree(Tree *t) {
 	int compressed_postL = 0;
 
 	for(int i = 0; i < compressedTreeSize_; i++) {
-		int original_preL = compressed_to_original[i][0];
+		int original_preL = compressed_to_original[i][compressed_to_original[i].size() - 1];
 		Node* n = new Node(i, (*t)[original_preL]->getLabel());
 		preL.push_back(n);
 	}
@@ -184,6 +184,10 @@ Node* CompressedTree::operator[](int i) {
 		return preL[0];
 	}
 	return preL[i];
+};
+
+vector<Node*> CompressedTree::getPreL(void) {
+	return preL;
 };
 
 string CompressedTree::toString(void) const {
