@@ -1567,7 +1567,7 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
             int q_in_original = cG->compressed_to_original[q][0];
             float t = (swap? (delta_tree[q_in_original][u] - G->preL_to_sumDelCost[q_in_original]) : (delta_tree[u][q_in_original] - G->preL_to_sumInsCost[q_in_original]));
             if(DEBUG) {
-              ou << "replace " << (*F)[u]->getLabel() << "(" << u << ") to " << (*G)[q_in_original] << "(" << q_in_original << ")" << endl; 
+              ou << "replace " << (*F)[u]->getLabel() << "(" << u << ") to " << (*G)[q_in_original]->getLabel() << "(" << q_in_original << ")" << endl; 
               if(swap) {
                 ou << "delta_tree[" << q_in_original << ", " << u << "] = " << delta_tree[q_in_original][u] << endl;
               } else {
@@ -1606,18 +1606,31 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
         for(int j = b1_plus_boff_in_original_preLs.size() - 1; j >= 0; j--) {
           int v = b1_plus_boff_in_original_preLs[j];
           vector<Node*> children = (*cF)[a1_plus_aoff_in_compressed_preL]->getChildren();
+          if(DEBUG) {
+            ou << "a1_plus_aoff_in_compressed_preL = " << a1_plus_aoff_in_compressed_preL << endl;
+          }
           float da = (swap? (delta_tree[v + 1][beta_i + 1] + costModel_.del((*G)[v]->getLabel())) : (delta_tree[beta_i + 1][v + 1] + costModel_.ins((*G)[v]->getLabel())));
           float min = FLT_MAX;
           for(int k = 0; k < children.size(); k++) {
             int q = children[k]->getID();
             int q_in_original = cF->compressed_to_original[q][0];
-            float t = (swap? (delta_tree[v][q_in_original] - costModel_.ins((*F)[q_in_original]->getLabel())) : (delta_tree[q_in_original][v] - costModel_.del((*F)[q_in_original]->getLabel())));
+            float t = (swap? (delta_tree[v][q_in_original] - F->preL_to_sumInsCost[q_in_original]) : (delta_tree[q_in_original][v] - F->preL_to_sumDelCost[q_in_original]));
+             if(DEBUG) {
+              ou << "replace " << (*G)[v]->getLabel() << "(" << v << ") to " << (*F)[q_in_original]->getLabel() << "(" << q_in_original << ")" << endl; 
+              if(swap) {
+                ou << "delta_tree[" << q_in_original << ", " << v << "] = " << delta_tree[q_in_original][v] << endl;
+              } else {
+                ou << "delta_tree[" << v << ", " << q_in_original << "] = " << delta_tree[v][q_in_original] << endl;
+              }
+            }
             if(t < min) {
               min = t;
             }
           }
           min += (swap? (F->preL_to_sumInsCost[beta_i] - costModel_.ins((*F)[beta_i]->getLabel())) : (F->preL_to_sumDelCost[beta_i] - costModel_.del((*F)[beta_i]->getLabel())));
-
+          if(DEBUG) {
+            ou << "min = " << min << endl;
+          }
           if(da < min) {
             min = da;
           }
@@ -1659,7 +1672,7 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
             }
             float dc = (swap? (delta_tree[v + 1][u + 1] + costModel_.ren((*G)[v]->getLabel(), (*F)[u]->getLabel())) : (delta_tree[u + 1][v + 1] + costModel_.ren((*F)[u]->getLabel(), (*G)[v]->getLabel())));
             if(DEBUG) {
-              ou << "db = delta_tree[";
+              ou << "dc = delta_tree[";
               if(swap) ou << v + 1 << ", " << u + 1 << "] =" << delta_tree[v + 1][u + 1] << endl;
               else ou << u + 1 << ", " << v + 1 << "] = " << delta_tree[u + 1][v + 1] << endl;
             }

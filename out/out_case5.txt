@@ -706,10 +706,12 @@ initial1 delta_tree[6, 3] = 0
 delete D(5)
 delta_tree[5, 3] = 1
 initial2 delta_tree[5, 3] = 1
+a1_plus_aoff_in_compressed_preL = 5
+min = 3.40282e+38
 initial3 delta_tree[6, 2] = 1
 da = delta_tree[6, 2] = 1
 db = delta_tree[5, 3] = 1
-db = delta_tree[6, 3] = 0
+dc = delta_tree[6, 3] = 0
 da = 2
 db = 2
 dc = 1
@@ -720,10 +722,12 @@ initial1 delta_tree[6, 2] = 0
 delete D(5)
 delta_tree[5, 2] = 1
 initial2 delta_tree[5, 2] = 1
+a1_plus_aoff_in_compressed_preL = 5
+min = 3.40282e+38
 initial3 delta_tree[6, 1] = 1
 da = delta_tree[6, 1] = 1
 db = delta_tree[5, 2] = 1
-db = delta_tree[6, 2] = 0
+dc = delta_tree[6, 2] = 0
 da = 2
 db = 2
 dc = 1
@@ -734,15 +738,17 @@ compute forestdist(5, 0)
 initial1 delta_tree[6, 1] = 2
 delete D(5)
 delta_tree[5, 1] = 1
-replace D(5) to 0xf69e90(1)
+replace D(5) to B(1)
 delta_tree[5, 1] = 1
-replace D(5) to 0xf69f20(2)
+replace D(5) to C(2)
 delta_tree[5, 2] = 1
 initial2 delta_tree[5, 1] = 2
+a1_plus_aoff_in_compressed_preL = 5
+min = 3.40282e+38
 initial3 delta_tree[6, 0] = 3
 da = delta_tree[6, 0] = 3
 db = delta_tree[5, 1] = 2
-db = delta_tree[6, 1] = 2
+dc = delta_tree[6, 1] = 2
 da = 4
 db = 3
 dc = 3
@@ -753,10 +759,12 @@ initial1 delta_tree[5, 3] = 0
 delete F(4)
 delta_tree[4, 3] = 1
 initial2 delta_tree[4, 3] = 1
+a1_plus_aoff_in_compressed_preL = 4
+min = 3.40282e+38
 initial3 delta_tree[5, 2] = 1
 da = delta_tree[5, 2] = 1
 db = delta_tree[4, 3] = 1
-db = delta_tree[5, 3] = 0
+dc = delta_tree[5, 3] = 0
 da = 2
 db = 2
 dc = 1
@@ -767,10 +775,12 @@ initial1 delta_tree[5, 2] = 0
 delete F(4)
 delta_tree[4, 2] = 1
 initial2 delta_tree[4, 2] = 1
+a1_plus_aoff_in_compressed_preL = 4
+min = 3.40282e+38
 initial3 delta_tree[5, 1] = 1
 da = delta_tree[5, 1] = 1
 db = delta_tree[4, 2] = 1
-db = delta_tree[5, 2] = 0
+dc = delta_tree[5, 2] = 0
 da = 2
 db = 2
 dc = 1
@@ -781,15 +791,17 @@ compute forestdist(4, 0)
 initial1 delta_tree[5, 1] = 2
 delete F(4)
 delta_tree[4, 1] = 1
-replace F(4) to 0xf69e90(1)
+replace F(4) to B(1)
 delta_tree[4, 1] = 1
-replace F(4) to 0xf69f20(2)
+replace F(4) to C(2)
 delta_tree[4, 2] = 1
 initial2 delta_tree[4, 1] = 2
+a1_plus_aoff_in_compressed_preL = 4
+min = 3.40282e+38
 initial3 delta_tree[5, 0] = 3
 da = delta_tree[5, 0] = 3
 db = delta_tree[4, 1] = 2
-db = delta_tree[5, 1] = 2
+dc = delta_tree[5, 1] = 2
 da = 4
 db = 3
 dc = 3
@@ -800,10 +812,12 @@ initial1 delta_tree[4, 3] = 0
 delete E(3)
 delta_tree[3, 3] = 1
 initial2 delta_tree[3, 3] = 1
+a1_plus_aoff_in_compressed_preL = 3
+min = 3.40282e+38
 initial3 delta_tree[4, 2] = 1
 da = delta_tree[4, 2] = 1
 db = delta_tree[3, 3] = 1
-db = delta_tree[4, 3] = 0
+dc = delta_tree[4, 3] = 0
 da = 2
 db = 2
 dc = 1
@@ -815,10 +829,16 @@ initial1 delta_tree[3, 3] = 2
 delete C(2)
 delta_tree[2, 3] = 3
 initial2 delta_tree[2, 3] = 3
+a1_plus_aoff_in_compressed_preL = 2
+replace C(2) to E(3)
+delta_tree[2, 3] = 3
+replace C(2) to F(4)
+delta_tree[2, 4] = 0
+min = 2
 initial3 delta_tree[3, 2] = 2
 da = delta_tree[3, 2] = 2
 db = delta_tree[2, 3] = 3
-db = delta_tree[3, 3] = 2
+dc = delta_tree[3, 3] = 2
 da = 3
 db = 4
 dc = 2
@@ -829,10 +849,12 @@ initial1 delta_tree[4, 2] = 0
 delete E(3)
 delta_tree[3, 2] = 1
 initial2 delta_tree[3, 2] = 1
+a1_plus_aoff_in_compressed_preL = 3
+min = 3.40282e+38
 initial3 delta_tree[4, 1] = 1
 da = delta_tree[4, 1] = 1
 db = delta_tree[3, 2] = 1
-db = delta_tree[4, 2] = 0
+dc = delta_tree[4, 2] = 0
 da = 2
 db = 2
 dc = 1
@@ -843,15 +865,17 @@ compute forestdist(3, 0)
 initial1 delta_tree[4, 1] = 2
 delete E(3)
 delta_tree[3, 1] = 1
-replace E(3) to 0xf69e90(1)
+replace E(3) to B(1)
 delta_tree[3, 1] = 1
-replace E(3) to 0xf69f20(2)
+replace E(3) to C(2)
 delta_tree[3, 2] = 1
 initial2 delta_tree[3, 1] = 2
+a1_plus_aoff_in_compressed_preL = 3
+min = 3.40282e+38
 initial3 delta_tree[4, 0] = 3
 da = delta_tree[4, 0] = 3
 db = delta_tree[3, 1] = 2
-db = delta_tree[4, 1] = 2
+dc = delta_tree[4, 1] = 2
 da = 4
 db = 3
 dc = 3
@@ -867,10 +891,16 @@ initial1 delta_tree[3, 2] = 2
 delete C(2)
 delta_tree[2, 2] = 2
 initial2 delta_tree[2, 2] = 3
+a1_plus_aoff_in_compressed_preL = 2
+replace B(1) to E(3)
+delta_tree[1, 3] = 1
+replace B(1) to F(4)
+delta_tree[1, 4] = 0
+min = 2
 initial3 delta_tree[3, 1] = 2
 da = delta_tree[3, 1] = 2
 db = delta_tree[2, 2] = 3
-db = delta_tree[3, 2] = 2
+dc = delta_tree[3, 2] = 2
 da = 3
 db = 4
 dc = 3
@@ -881,15 +911,21 @@ compute forestdist(2, 0)
 initial1 delta_tree[3, 1] = 2
 delete C(2)
 delta_tree[2, 1] = 3
-replace C(2) to 0xf69e90(1)
+replace C(2) to B(1)
 delta_tree[2, 1] = 3
-replace C(2) to 0xf69f20(2)
+replace C(2) to C(2)
 delta_tree[2, 2] = 2
 initial2 delta_tree[2, 1] = 3
+a1_plus_aoff_in_compressed_preL = 2
+replace A(0) to E(3)
+delta_tree[0, 3] = 6
+replace A(0) to F(4)
+delta_tree[0, 4] = 0
+min = 4
 initial3 delta_tree[3, 0] = 3
 da = delta_tree[3, 0] = 3
 db = delta_tree[2, 1] = 3
-db = delta_tree[3, 1] = 2
+dc = delta_tree[3, 1] = 2
 da = 4
 db = 4
 dc = 3
@@ -900,10 +936,12 @@ initial1 delta_tree[2, 3] = 0
 delete B(1)
 delta_tree[1, 3] = 1
 initial2 delta_tree[1, 3] = 1
+a1_plus_aoff_in_compressed_preL = 1
+min = 3.40282e+38
 initial3 delta_tree[2, 2] = 1
 da = delta_tree[2, 2] = 1
 db = delta_tree[1, 3] = 1
-db = delta_tree[2, 3] = 0
+dc = delta_tree[2, 3] = 0
 da = 2
 db = 2
 dc = 1
@@ -921,24 +959,34 @@ initial1 delta_tree[1, 3] = 5
 delete A(0)
 delta_tree[0, 3] = 6
 initial2 delta_tree[0, 3] = 6
-initial3 delta_tree[1, 2] = 5
-da = delta_tree[1, 2] = 5
+a1_plus_aoff_in_compressed_preL = 0
+replace C(2) to B(1)
+delta_tree[2, 1] = 3
+replace C(2) to C(2)
+delta_tree[2, 2] = 2
+replace C(2) to D(5)
+delta_tree[2, 5] = 0
+min = 4
+initial3 delta_tree[1, 2] = 4
+da = delta_tree[1, 2] = 4
 db = delta_tree[0, 3] = 6
-db = delta_tree[1, 3] = 5
-da = 6
+dc = delta_tree[1, 3] = 5
+da = 5
 db = 7
 dc = 6
-delta_tree[0, 2] = 6
+delta_tree[0, 2] = 5
 TreeDistance(0, 0) swap = 0
 compute forestdist(1, 1)
 initial1 delta_tree[2, 2] = 0
 delete B(1)
 delta_tree[1, 2] = 1
 initial2 delta_tree[1, 2] = 1
+a1_plus_aoff_in_compressed_preL = 1
+min = 3.40282e+38
 initial3 delta_tree[2, 1] = 1
 da = delta_tree[2, 1] = 1
 db = delta_tree[1, 2] = 1
-db = delta_tree[2, 2] = 0
+dc = delta_tree[2, 2] = 0
 da = 2
 db = 2
 dc = 0
@@ -949,15 +997,17 @@ compute forestdist(1, 0)
 initial1 delta_tree[2, 1] = 2
 delete B(1)
 delta_tree[1, 1] = 0
-replace B(1) to 0xf69e90(1)
+replace B(1) to B(1)
 delta_tree[1, 1] = 0
-replace B(1) to 0xf69f20(2)
+replace B(1) to C(2)
 delta_tree[1, 2] = 1
 initial2 delta_tree[1, 1] = 1
+a1_plus_aoff_in_compressed_preL = 1
+min = 3.40282e+38
 initial3 delta_tree[2, 0] = 3
 da = delta_tree[2, 0] = 3
 db = delta_tree[1, 1] = 1
-db = delta_tree[2, 1] = 2
+dc = delta_tree[2, 1] = 2
 da = 4
 db = 2
 dc = 3
@@ -989,12 +1039,20 @@ forestdist[5, 3] = 4
 compute forestdist(0, 1)
 initial1 delta_tree[1, 2] = 5
 delete A(0)
-delta_tree[0, 2] = 6
+delta_tree[0, 2] = 5
 initial2 delta_tree[0, 2] = 6
+a1_plus_aoff_in_compressed_preL = 0
+replace B(1) to B(1)
+delta_tree[1, 1] = 0
+replace B(1) to C(2)
+delta_tree[1, 2] = 5
+replace B(1) to D(5)
+delta_tree[1, 5] = 0
+min = 4
 initial3 delta_tree[1, 1] = 4
 da = delta_tree[1, 1] = 4
 db = delta_tree[0, 2] = 6
-db = delta_tree[1, 2] = 5
+dc = delta_tree[1, 2] = 5
 da = 5
 db = 7
 dc = 6
@@ -1005,22 +1063,30 @@ compute forestdist(0, 0)
 initial1 delta_tree[1, 1] = 3
 delete A(0)
 delta_tree[0, 1] = 5
-replace A(0) to 0xf69e90(1)
+replace A(0) to B(1)
 delta_tree[0, 1] = 5
-replace A(0) to 0xf69f20(2)
-delta_tree[0, 2] = 6
+replace A(0) to C(2)
+delta_tree[0, 2] = 5
 initial2 delta_tree[0, 1] = 4
+a1_plus_aoff_in_compressed_preL = 0
+replace A(0) to B(1)
+delta_tree[0, 1] = 4
+replace A(0) to C(2)
+delta_tree[0, 2] = 5
+replace A(0) to D(5)
+delta_tree[0, 5] = 0
+min = 5
 initial3 delta_tree[1, 0] = 4
 da = delta_tree[1, 0] = 4
 db = delta_tree[0, 1] = 4
-db = delta_tree[1, 1] = 3
+dc = delta_tree[1, 1] = 3
 da = 5
 db = 5
 dc = 3
 delta_tree[0, 0] = 3
 delta Result LL_compressed
 delta_tree
-3 5 6 6 
+3 5 5 6 
 2 0 1 1 
 3 3 2 3 
 3 1 1 1 
@@ -1029,7 +1095,7 @@ delta_tree
 3 1 1 0 
 
 delta_compressed_tree
-3 5 6 6 
+3 5 5 6 
 2 0 1 1 
 3 3 2 3 
 3 1 1 1 
