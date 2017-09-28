@@ -112,7 +112,7 @@ leftmostForestNum: 1
 rightmostForestNum: 1
 specialmostForestNum: 1
 
-ID: 2 label: C
+ID: 2 label: E
 parent is 0
 childrenNum: 0
 
@@ -591,38 +591,68 @@ delta Result
 
 gteo_LL(0, 0)
 TreeDistance(0, 0) swap = 0
+Compute forestdist(1, 1)
 delta[1, 1] = 0.000000
 forestdist[1, 1] = 0
+Compute forestdist(1, 3)
 forestdist[1, 2] = 1
+Compute forestdist(1, 2)
 forestdist[1, 3] = 2
+Compute forestdist(1, 4)
 forestdist[1, 4] = 3
+Compute forestdist(1, 0)
 delta[1, 0] = 4.000000
 forestdist[1, 5] = 4
+Compute forestdist(3, 1)
 forestdist[2, 1] = 1
+Compute forestdist(3, 3)
 forestdist[2, 2] = 0
+Compute forestdist(3, 2)
 forestdist[2, 3] = 1
+Compute forestdist(3, 4)
 forestdist[2, 4] = 2
+Compute forestdist(3, 0)
 forestdist[2, 5] = 3
+Compute forestdist(4, 1)
 forestdist[3, 1] = 2
+Compute forestdist(4, 3)
 forestdist[3, 2] = 1
+Compute forestdist(4, 2)
 forestdist[3, 3] = 2
+Compute forestdist(4, 4)
 forestdist[3, 4] = 2
+Compute forestdist(4, 0)
 forestdist[3, 5] = 3
+Compute forestdist(2, 1)
 forestdist[4, 1] = 3
+Compute forestdist(2, 3)
 forestdist[4, 2] = 2
+Compute forestdist(2, 2)
 forestdist[4, 3] = 1
+Compute forestdist(2, 4)
 forestdist[4, 4] = 2
+Compute forestdist(2, 0)
 forestdist[4, 5] = 3
+Compute forestdist(5, 1)
 forestdist[5, 1] = 4
+Compute forestdist(5, 3)
 forestdist[5, 2] = 3
+Compute forestdist(5, 2)
 forestdist[5, 3] = 2
+Compute forestdist(5, 4)
 forestdist[5, 4] = 1
+Compute forestdist(5, 0)
 forestdist[5, 5] = 2
+Compute forestdist(0, 1)
 delta[0, 1] = 5.000000
 forestdist[6, 1] = 5
+Compute forestdist(0, 3)
 forestdist[6, 2] = 4
+Compute forestdist(0, 2)
 forestdist[6, 3] = 3
+Compute forestdist(0, 4)
 forestdist[6, 4] = 2
+Compute forestdist(0, 0)
 delta[0, 0] = 1.000000
 forestdist[6, 5] = 1
 forestdist
@@ -659,14 +689,20 @@ forestdist[4, 3] = 1
 C(2) -> C(2)
 gteo_LL(2, 2)
 TreeDistance(2, 2) swap = 0
+Compute forestdist(3, 3)
 delta[3, 3] = 0.000000
 forestdist[1, 1] = 0
+Compute forestdist(3, 2)
 delta[3, 2] = 1.000000
 forestdist[1, 2] = 1
+Compute forestdist(4, 3)
 forestdist[2, 1] = 1
+Compute forestdist(4, 2)
 forestdist[2, 2] = 2
+Compute forestdist(2, 3)
 delta[2, 3] = 2.000000
 forestdist[3, 1] = 2
+Compute forestdist(2, 2)
 delta[2, 2] = 1.000000
 forestdist[3, 2] = 1
 forestdist
@@ -699,133 +735,221 @@ forestdist[0, 0] = 0
 forestdist[1, 1] = 0
 B(1) -> B(1)
 TreeDistance(5, 4) swap = 0
+Compute forestdist(5, 4)
 delta[5, 4] = 0.000000
 forestdist[1, 1] = 0
 TreeDistance(5, 2) swap = 0
+Compute forestdist(5, 3)
 delta[5, 3] = 0.000000
 forestdist[1, 1] = 1
+Compute forestdist(5, 2)
 delta[5, 2] = 1.000000
 forestdist[1, 2] = 2
 TreeDistance(5, 0) swap = 0
+Compute forestdist(5, 1)
 delta[5, 1] = 0.000000
 forestdist[1, 1] = 1
+Compute forestdist(5, 3)
 forestdist[1, 2] = 2
+Compute forestdist(5, 2)
 forestdist[1, 3] = 3
+Compute forestdist(5, 4)
 forestdist[1, 4] = 3
+Compute forestdist(5, 0)
 delta[5, 0] = 4.000000
 forestdist[1, 5] = 4
 TreeDistance(4, 4) swap = 0
+Compute forestdist(4, 4)
 delta[4, 4] = 0.000000
 forestdist[1, 1] = 1
 TreeDistance(4, 2) swap = 0
+Compute forestdist(4, 3)
 delta[4, 3] = 0.000000
 forestdist[1, 1] = 1
+Compute forestdist(4, 2)
 delta[4, 2] = 1.000000
 forestdist[1, 2] = 2
 TreeDistance(4, 0) swap = 0
+Compute forestdist(4, 1)
 delta[4, 1] = 0.000000
 forestdist[1, 1] = 1
+Compute forestdist(4, 3)
 forestdist[1, 2] = 2
+Compute forestdist(4, 2)
 forestdist[1, 3] = 3
+Compute forestdist(4, 4)
 forestdist[1, 4] = 4
+Compute forestdist(4, 0)
 delta[4, 0] = 4.000000
 forestdist[1, 5] = 5
 TreeDistance(2, 4) swap = 0
+Compute forestdist(3, 4)
 delta[3, 4] = 0.000000
 forestdist[1, 1] = 1
+Compute forestdist(4, 4)
 forestdist[2, 1] = 2
+Compute forestdist(2, 4)
 delta[2, 4] = 2.000000
 forestdist[3, 1] = 3
 TreeDistance(2, 2) swap = 0
+Compute forestdist(3, 3)
 delta[3, 3] = 0.000000
 forestdist[1, 1] = 0
+Compute forestdist(3, 2)
 delta[3, 2] = 1.000000
 forestdist[1, 2] = 1
+Compute forestdist(4, 3)
 forestdist[2, 1] = 1
+Compute forestdist(4, 2)
 forestdist[2, 2] = 2
+Compute forestdist(2, 3)
 delta[2, 3] = 2.000000
 forestdist[3, 1] = 2
+Compute forestdist(2, 2)
 delta[2, 2] = 1.000000
 forestdist[3, 2] = 1
 TreeDistance(2, 0) swap = 0
+Compute forestdist(3, 1)
 delta[3, 1] = 0.000000
 forestdist[1, 1] = 1
+Compute forestdist(3, 3)
 forestdist[1, 2] = 1
+Compute forestdist(3, 2)
 forestdist[1, 3] = 2
+Compute forestdist(3, 4)
 forestdist[1, 4] = 3
+Compute forestdist(3, 0)
 delta[3, 0] = 4.000000
 forestdist[1, 5] = 4
+Compute forestdist(4, 1)
 forestdist[2, 1] = 2
+Compute forestdist(4, 3)
 forestdist[2, 2] = 2
+Compute forestdist(4, 2)
 forestdist[2, 3] = 3
+Compute forestdist(4, 4)
 forestdist[2, 4] = 3
+Compute forestdist(4, 0)
 forestdist[2, 5] = 4
+Compute forestdist(2, 1)
 delta[2, 1] = 2.000000
 forestdist[3, 1] = 3
+Compute forestdist(2, 3)
 forestdist[3, 2] = 3
+Compute forestdist(2, 2)
 forestdist[3, 3] = 2
+Compute forestdist(2, 4)
 forestdist[3, 4] = 3
+Compute forestdist(2, 0)
 delta[2, 0] = 3.000000
 forestdist[3, 5] = 4
 TreeDistance(0, 4) swap = 0
+Compute forestdist(1, 4)
 delta[1, 4] = 0.000000
 forestdist[1, 1] = 1
+Compute forestdist(3, 4)
 forestdist[2, 1] = 2
+Compute forestdist(4, 4)
 forestdist[3, 1] = 3
+Compute forestdist(2, 4)
 forestdist[4, 1] = 4
+Compute forestdist(5, 4)
 forestdist[5, 1] = 4
+Compute forestdist(0, 4)
 delta[0, 4] = 5.000000
 forestdist[6, 1] = 5
 TreeDistance(0, 2) swap = 0
+Compute forestdist(1, 3)
 delta[1, 3] = 0.000000
 forestdist[1, 1] = 1
+Compute forestdist(1, 2)
 delta[1, 2] = 1.000000
 forestdist[1, 2] = 2
+Compute forestdist(3, 3)
 forestdist[2, 1] = 1
+Compute forestdist(3, 2)
 forestdist[2, 2] = 2
+Compute forestdist(4, 3)
 forestdist[3, 1] = 2
+Compute forestdist(4, 2)
 forestdist[3, 2] = 3
+Compute forestdist(2, 3)
 forestdist[4, 1] = 3
+Compute forestdist(2, 2)
 forestdist[4, 2] = 2
+Compute forestdist(5, 3)
 forestdist[5, 1] = 4
+Compute forestdist(5, 2)
 forestdist[5, 2] = 3
+Compute forestdist(0, 3)
 delta[0, 3] = 5.000000
 forestdist[6, 1] = 5
+Compute forestdist(0, 2)
 delta[0, 2] = 4.000000
 forestdist[6, 2] = 4
 TreeDistance(0, 0) swap = 0
+Compute forestdist(1, 1)
 delta[1, 1] = 0.000000
 forestdist[1, 1] = 0
+Compute forestdist(1, 3)
 forestdist[1, 2] = 1
+Compute forestdist(1, 2)
 forestdist[1, 3] = 2
+Compute forestdist(1, 4)
 forestdist[1, 4] = 3
+Compute forestdist(1, 0)
 delta[1, 0] = 4.000000
 forestdist[1, 5] = 4
+Compute forestdist(3, 1)
 forestdist[2, 1] = 1
+Compute forestdist(3, 3)
 forestdist[2, 2] = 0
+Compute forestdist(3, 2)
 forestdist[2, 3] = 1
+Compute forestdist(3, 4)
 forestdist[2, 4] = 2
+Compute forestdist(3, 0)
 forestdist[2, 5] = 3
+Compute forestdist(4, 1)
 forestdist[3, 1] = 2
+Compute forestdist(4, 3)
 forestdist[3, 2] = 1
+Compute forestdist(4, 2)
 forestdist[3, 3] = 2
+Compute forestdist(4, 4)
 forestdist[3, 4] = 2
+Compute forestdist(4, 0)
 forestdist[3, 5] = 3
+Compute forestdist(2, 1)
 forestdist[4, 1] = 3
+Compute forestdist(2, 3)
 forestdist[4, 2] = 2
+Compute forestdist(2, 2)
 forestdist[4, 3] = 1
+Compute forestdist(2, 4)
 forestdist[4, 4] = 2
+Compute forestdist(2, 0)
 forestdist[4, 5] = 3
+Compute forestdist(5, 1)
 forestdist[5, 1] = 4
+Compute forestdist(5, 3)
 forestdist[5, 2] = 3
+Compute forestdist(5, 2)
 forestdist[5, 3] = 2
+Compute forestdist(5, 4)
 forestdist[5, 4] = 1
+Compute forestdist(5, 0)
 forestdist[5, 5] = 2
+Compute forestdist(0, 1)
 delta[0, 1] = 5.000000
 forestdist[6, 1] = 5
+Compute forestdist(0, 3)
 forestdist[6, 2] = 4
+Compute forestdist(0, 2)
 forestdist[6, 3] = 3
+Compute forestdist(0, 4)
 forestdist[6, 4] = 2
+Compute forestdist(0, 0)
 delta[0, 0] = 1.000000
 forestdist[6, 5] = 1
 delta Result LL
@@ -836,322 +960,733 @@ delta Result LL
 4 0 1 0 0 
 4 0 1 0 0 
 
-FkeyRoots
-5 4 2 0 
-GkeyRoots
-3 2 0 
-cFkeyRoots_in_original
-5 
-cGkeyRoots_in_original
-4 
-TreeDistance_compressed(5, 4) swap = 0
-a_in_compressed_in_postL = 4 b_in_compressed_in_postL = 2
-aoff = 3 boff = 1
-Compute forestdist(5, 4)
-delta[5, 4] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 0
-cFkeyRoots_in_original
-5 
-cGkeyRoots_in_original
-2 3 
-TreeDistance_compressed(5, 3) swap = 0
-a_in_compressed_in_postL = 4 b_in_compressed_in_postL = 1
-aoff = 3 boff = 0
-Compute forestdist(5, 3)
-delta[5, 3] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-TreeDistance_compressed(5, 2) swap = 0
-a_in_compressed_in_postL = 4 b_in_compressed_in_postL = 1
-aoff = 3 boff = 0
-Compute forestdist(5, 3)
-delta[5, 3] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-Compute forestdist(5, 2)
-delta[5, 2] = forestdist[0, 1] = 1.000000
-forestdist[1, 2] = 2
-cFkeyRoots_in_original
-5 
-cGkeyRoots_in_original
-0 
-TreeDistance_compressed(5, 0) swap = 0
-a_in_compressed_in_postL = 4 b_in_compressed_in_postL = 3
-aoff = 3 boff = -1
-Compute forestdist(5, 1)
-delta[5, 1] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-Compute forestdist(5, 3)
-forestdist[1, 2] = 2
-Compute forestdist(5, 4)
+TreeDistance(5, 3) swap = 0
+compute forestdist(5, 3)
+initial1 delta_tree[6, 5] = 0
+delete D(5)
+delta_tree[5, 5] = 1
+initial2 delta_tree[5, 5] = 1
+initial3 delta_tree[6, 4] = 1
+da = delta_tree[6, 4] = 1
+db = delta_tree[5, 5] = 1
+db = delta_tree[6, 5] = 0
+da = 2
+db = 2
+dc = 0
+delta_tree[5, 4] = 0
+TreeDistance(5, 2) swap = 0
+compute forestdist(5, 2)
+initial1 delta_tree[6, 4] = 0
+delete D(5)
+delta_tree[5, 4] = 0
+initial2 delta_tree[5, 4] = 1
+initial3 delta_tree[6, 3] = 1
+initial3 delta_tree[6, 2] = 2
+da = delta_tree[6, 3] = 1
+db = delta_tree[5, 4] = 1
+db = delta_tree[6, 4] = 0
+da = 2
+db = 2
+dc = 1
+delta_tree[5, 3] = 1
+da = delta_tree[6, 2] = 2
+db = delta_tree[5, 3] = 1
+db = delta_tree[6, 3] = 1
+da = 3
+db = 2
+dc = 2
+delta_tree[5, 2] = 2
+TreeDistance(5, 0) swap = 0
+compute forestdist(5, 1)
+initial1 delta_tree[6, 2] = 0
+delete D(5)
+delta_tree[5, 2] = 2
+initial2 delta_tree[5, 2] = 1
+initial3 delta_tree[6, 1] = 1
+da = delta_tree[6, 1] = 1
+db = delta_tree[5, 2] = 1
+db = delta_tree[6, 2] = 0
+da = 2
+db = 2
+dc = 1
+delta_tree[5, 1] = 1
+compute forestdist(5, 2)
+forestdist[1, 2] = 3
+compute forestdist(5, 3)
 forestdist[1, 3] = 3
-Compute forestdist(5, 0)
-delta[5, 0] = forestdist[0, 3] = 4.000000
-forestdist[1, 4] = 4
-cFkeyRoots_in_original
-4 
-cGkeyRoots_in_original
-4 
-TreeDistance_compressed(4, 4) swap = 0
-a_in_compressed_in_postL = 2 b_in_compressed_in_postL = 2
-aoff = 1 boff = 1
-Compute forestdist(4, 4)
-delta[4, 4] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-cFkeyRoots_in_original
-4 
-cGkeyRoots_in_original
-2 3 
-TreeDistance_compressed(4, 3) swap = 0
-a_in_compressed_in_postL = 2 b_in_compressed_in_postL = 1
-aoff = 1 boff = 0
-Compute forestdist(4, 3)
-delta[4, 3] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-TreeDistance_compressed(4, 2) swap = 0
-a_in_compressed_in_postL = 2 b_in_compressed_in_postL = 1
-aoff = 1 boff = 0
-Compute forestdist(4, 3)
-delta[4, 3] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-Compute forestdist(4, 2)
-delta[4, 2] = forestdist[0, 1] = 1.000000
+compute forestdist(5, 0)
+initial1 delta_tree[6, 1] = 4
+delete D(5)
+delta_tree[5, 1] = 1
+replace D(5) to 0xf4c8a0(1)
+delta_tree[5, 1] = 1
+replace D(5) to 0xf4c930(2)
+delta_tree[5, 2] = 2
+replace D(5) to 0xf4ca00(4)
+delta_tree[5, 4] = 0
+initial2 delta_tree[5, 1] = 3
+initial3 delta_tree[6, 0] = 5
+da = delta_tree[6, 0] = 5
+db = delta_tree[5, 1] = 3
+db = delta_tree[6, 1] = 4
+da = 6
+db = 4
+dc = 5
+delta_tree[5, 0] = 4
+TreeDistance(4, 3) swap = 0
+compute forestdist(4, 3)
+initial1 delta_tree[5, 5] = 0
+delete F(4)
+delta_tree[4, 5] = 1
+initial2 delta_tree[4, 5] = 1
+initial3 delta_tree[5, 4] = 1
+da = delta_tree[5, 4] = 1
+db = delta_tree[4, 5] = 1
+db = delta_tree[5, 5] = 0
+da = 2
+db = 2
+dc = 1
+delta_tree[4, 4] = 1
+TreeDistance(4, 2) swap = 0
+compute forestdist(4, 2)
+initial1 delta_tree[5, 4] = 0
+delete F(4)
+delta_tree[4, 4] = 1
+initial2 delta_tree[4, 4] = 1
+initial3 delta_tree[5, 3] = 1
+initial3 delta_tree[5, 2] = 2
+da = delta_tree[5, 3] = 1
+db = delta_tree[4, 4] = 1
+db = delta_tree[5, 4] = 0
+da = 2
+db = 2
+dc = 1
+delta_tree[4, 3] = 1
+da = delta_tree[5, 2] = 2
+db = delta_tree[4, 3] = 1
+db = delta_tree[5, 3] = 1
+da = 3
+db = 2
+dc = 2
+delta_tree[4, 2] = 2
+TreeDistance(4, 0) swap = 0
+compute forestdist(4, 1)
+initial1 delta_tree[5, 2] = 0
+delete F(4)
+delta_tree[4, 2] = 2
+initial2 delta_tree[4, 2] = 1
+initial3 delta_tree[5, 1] = 1
+da = delta_tree[5, 1] = 1
+db = delta_tree[4, 2] = 1
+db = delta_tree[5, 2] = 0
+da = 2
+db = 2
+dc = 1
+delta_tree[4, 1] = 1
+compute forestdist(4, 2)
+forestdist[1, 2] = 3
+compute forestdist(4, 3)
+forestdist[1, 3] = 4
+compute forestdist(4, 0)
+initial1 delta_tree[5, 1] = 4
+delete F(4)
+delta_tree[4, 1] = 1
+replace F(4) to 0xf4c8a0(1)
+delta_tree[4, 1] = 1
+replace F(4) to 0xf4c930(2)
+delta_tree[4, 2] = 2
+replace F(4) to 0xf4ca00(4)
+delta_tree[4, 4] = 1
+initial2 delta_tree[4, 1] = 4
+initial3 delta_tree[5, 0] = 5
+da = delta_tree[5, 0] = 5
+db = delta_tree[4, 1] = 4
+db = delta_tree[5, 1] = 4
+da = 6
+db = 5
+dc = 5
+delta_tree[4, 0] = 5
+TreeDistance(2, 3) swap = 0
+compute forestdist(3, 3)
+initial1 delta_tree[4, 5] = 0
+delete E(3)
+delta_tree[3, 5] = 1
+initial2 delta_tree[3, 5] = 1
+initial3 delta_tree[4, 4] = 1
+da = delta_tree[4, 4] = 1
+db = delta_tree[3, 5] = 1
+db = delta_tree[4, 5] = 0
+da = 2
+db = 2
+dc = 1
+delta_tree[3, 4] = 1
+compute forestdist(4, 3)
+forestdist[2, 1] = 2
+compute forestdist(2, 3)
+initial1 delta_tree[3, 5] = 2
+delete C(2)
+delta_tree[2, 5] = 3
+initial2 delta_tree[2, 5] = 3
+initial3 delta_tree[3, 4] = 2
+da = delta_tree[3, 4] = 2
+db = delta_tree[2, 5] = 3
+db = delta_tree[3, 5] = 2
+da = 3
+db = 4
+dc = 3
+delta_tree[2, 4] = 3
+TreeDistance(2, 2) swap = 0
+compute forestdist(3, 2)
+initial1 delta_tree[4, 4] = 0
+delete E(3)
+delta_tree[3, 4] = 1
+initial2 delta_tree[3, 4] = 1
+initial3 delta_tree[4, 3] = 1
+initial3 delta_tree[4, 2] = 2
+da = delta_tree[4, 3] = 1
+db = delta_tree[3, 4] = 1
+db = delta_tree[4, 4] = 0
+da = 2
+db = 2
+dc = 0
+delta_tree[3, 3] = 0
+da = delta_tree[4, 2] = 2
+db = delta_tree[3, 3] = 0
+db = delta_tree[4, 3] = 1
+da = 3
+db = 1
+dc = 2
+delta_tree[3, 2] = 1
+compute forestdist(4, 2)
+forestdist[2, 1] = 2
+compute forestdist(2, 2)
+initial1 delta_tree[3, 4] = 2
+delete C(2)
+delta_tree[2, 4] = 3
+initial2 delta_tree[2, 4] = 3
+initial3 delta_tree[3, 3] = 1
+initial3 delta_tree[3, 2] = 2
+da = delta_tree[3, 3] = 1
+db = delta_tree[2, 4] = 3
+db = delta_tree[3, 4] = 2
+da = 2
+db = 4
+dc = 3
+delta_tree[2, 3] = 2
+da = delta_tree[3, 2] = 2
+db = delta_tree[2, 3] = 2
+db = delta_tree[3, 3] = 1
+da = 3
+db = 3
+dc = 1
+delta_tree[2, 2] = 1
+TreeDistance(2, 0) swap = 0
+compute forestdist(3, 1)
+initial1 delta_tree[4, 2] = 0
+delete E(3)
+delta_tree[3, 2] = 1
+initial2 delta_tree[3, 2] = 1
+initial3 delta_tree[4, 1] = 1
+da = delta_tree[4, 1] = 1
+db = delta_tree[3, 2] = 1
+db = delta_tree[4, 2] = 0
+da = 2
+db = 2
+dc = 1
+delta_tree[3, 1] = 1
+compute forestdist(3, 2)
 forestdist[1, 2] = 2
-cFkeyRoots_in_original
-4 
-cGkeyRoots_in_original
-0 
-TreeDistance_compressed(4, 0) swap = 0
-a_in_compressed_in_postL = 2 b_in_compressed_in_postL = 3
-aoff = 1 boff = -1
-Compute forestdist(4, 1)
-delta[4, 1] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-Compute forestdist(4, 3)
-forestdist[1, 2] = 2
-Compute forestdist(4, 4)
+compute forestdist(3, 3)
 forestdist[1, 3] = 3
-Compute forestdist(4, 0)
-delta[4, 0] = forestdist[0, 3] = 4.000000
-forestdist[1, 4] = 4
-cFkeyRoots_in_original
-2 
-cGkeyRoots_in_original
-4 
-TreeDistance_compressed(2, 4) swap = 0
-a_in_compressed_in_postL = 3 b_in_compressed_in_postL = 2
-aoff = 0 boff = 1
-Compute forestdist(3, 4)
-delta[3, 4] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-Compute forestdist(4, 4)
+compute forestdist(3, 0)
+initial1 delta_tree[4, 1] = 4
+delete E(3)
+delta_tree[3, 1] = 1
+replace E(3) to 0xf4c8a0(1)
+delta_tree[3, 1] = 1
+replace E(3) to 0xf4c930(2)
+delta_tree[3, 2] = 1
+replace E(3) to 0xf4ca00(4)
+delta_tree[3, 4] = 1
+initial2 delta_tree[3, 1] = 3
+initial3 delta_tree[4, 0] = 5
+da = delta_tree[4, 0] = 5
+db = delta_tree[3, 1] = 3
+db = delta_tree[4, 1] = 4
+da = 6
+db = 4
+dc = 5
+delta_tree[3, 0] = 4
+compute forestdist(4, 1)
 forestdist[2, 1] = 2
-Compute forestdist(2, 4)
-delta[2, 4] = forestdist[2, 0] = 2.000000
-forestdist[3, 1] = 3
-cFkeyRoots_in_original
-2 
-cGkeyRoots_in_original
-2 3 
-TreeDistance_compressed(2, 3) swap = 0
-a_in_compressed_in_postL = 3 b_in_compressed_in_postL = 1
-aoff = 0 boff = 0
-Compute forestdist(3, 3)
-delta[3, 3] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-Compute forestdist(4, 3)
-forestdist[2, 1] = 2
-Compute forestdist(2, 3)
-delta[2, 3] = forestdist[2, 0] = 2.000000
-forestdist[3, 1] = 2
-TreeDistance_compressed(2, 2) swap = 0
-a_in_compressed_in_postL = 3 b_in_compressed_in_postL = 1
-aoff = 0 boff = 0
-Compute forestdist(3, 3)
-delta[3, 3] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-Compute forestdist(4, 3)
-forestdist[2, 1] = 2
-Compute forestdist(2, 3)
-delta[2, 3] = forestdist[2, 0] = 2.000000
-forestdist[3, 1] = 2
-Compute forestdist(3, 2)
-delta[3, 2] = forestdist[0, 1] = 1.000000
-forestdist[1, 2] = 2
-Compute forestdist(4, 2)
+compute forestdist(4, 2)
 forestdist[2, 2] = 3
-Compute forestdist(2, 2)
-delta[2, 2] = forestdist[2, 1] = 2.000000
-forestdist[3, 2] = 2
-cFkeyRoots_in_original
-2 
-cGkeyRoots_in_original
-0 
-TreeDistance_compressed(2, 0) swap = 0
-a_in_compressed_in_postL = 3 b_in_compressed_in_postL = 3
-aoff = 0 boff = -1
-Compute forestdist(3, 1)
-delta[3, 1] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-Compute forestdist(3, 3)
-forestdist[1, 2] = 2
-Compute forestdist(3, 4)
-forestdist[1, 3] = 3
-Compute forestdist(3, 0)
-delta[3, 0] = forestdist[0, 3] = 4.000000
-forestdist[1, 4] = 4
-Compute forestdist(4, 1)
-forestdist[2, 1] = 2
-Compute forestdist(4, 3)
-forestdist[2, 2] = 2
-Compute forestdist(4, 4)
+compute forestdist(4, 3)
 forestdist[2, 3] = 3
-Compute forestdist(4, 0)
+compute forestdist(4, 0)
 forestdist[2, 4] = 4
-Compute forestdist(2, 1)
-delta[2, 1] = forestdist[2, 0] = 2.000000
-forestdist[3, 1] = 3
-Compute forestdist(2, 3)
-forestdist[3, 2] = 3
-Compute forestdist(2, 4)
-forestdist[3, 3] = 4
-Compute forestdist(2, 0)
-delta[2, 0] = forestdist[2, 3] = 3.000000
-forestdist[3, 4] = 4
-cFkeyRoots_in_original
-0 
-cGkeyRoots_in_original
-4 
-TreeDistance_compressed(0, 4) swap = 0
-a_in_compressed_in_postL = 5 b_in_compressed_in_postL = 2
-aoff = -1 boff = 1
-Compute forestdist(1, 4)
-delta[1, 4] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-Compute forestdist(3, 4)
-forestdist[2, 1] = 2
-Compute forestdist(4, 4)
-forestdist[3, 1] = 3
-Compute forestdist(2, 4)
-forestdist[4, 1] = 4
-Compute forestdist(5, 4)
-forestdist[5, 1] = 4
-Compute forestdist(0, 4)
-delta[0, 4] = forestdist[5, 0] = 5.000000
-forestdist[6, 1] = 5
-cFkeyRoots_in_original
-0 
-cGkeyRoots_in_original
-2 3 
-TreeDistance_compressed(0, 3) swap = 0
-a_in_compressed_in_postL = 5 b_in_compressed_in_postL = 1
-aoff = -1 boff = 0
-Compute forestdist(1, 3)
-delta[1, 3] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-Compute forestdist(3, 3)
-forestdist[2, 1] = 2
-Compute forestdist(4, 3)
-forestdist[3, 1] = 3
-Compute forestdist(2, 3)
-forestdist[4, 1] = 3
-Compute forestdist(5, 3)
-forestdist[5, 1] = 4
-Compute forestdist(0, 3)
-delta[0, 3] = forestdist[5, 0] = 5.000000
-forestdist[6, 1] = 5
-TreeDistance_compressed(0, 2) swap = 0
-a_in_compressed_in_postL = 5 b_in_compressed_in_postL = 1
-aoff = -1 boff = 0
-Compute forestdist(1, 3)
-delta[1, 3] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 1
-Compute forestdist(3, 3)
-forestdist[2, 1] = 2
-Compute forestdist(4, 3)
-forestdist[3, 1] = 3
-Compute forestdist(2, 3)
-forestdist[4, 1] = 3
-Compute forestdist(5, 3)
-forestdist[5, 1] = 4
-Compute forestdist(0, 3)
-delta[0, 3] = forestdist[5, 0] = 5.000000
-forestdist[6, 1] = 5
-Compute forestdist(1, 2)
-delta[1, 2] = forestdist[0, 1] = 1.000000
-forestdist[1, 2] = 2
-Compute forestdist(3, 2)
-forestdist[2, 2] = 3
-Compute forestdist(4, 2)
-forestdist[3, 2] = 4
-Compute forestdist(2, 2)
-forestdist[4, 2] = 3
-Compute forestdist(5, 2)
-forestdist[5, 2] = 4
-Compute forestdist(0, 2)
-delta[0, 2] = forestdist[5, 1] = 4.000000
-forestdist[6, 2] = 5
-cFkeyRoots_in_original
-0 
-cGkeyRoots_in_original
-0 
-TreeDistance_compressed(0, 0) swap = 0
-a_in_compressed_in_postL = 5 b_in_compressed_in_postL = 3
-aoff = -1 boff = -1
-Compute forestdist(1, 1)
-delta[1, 1] = forestdist[0, 0] = 0.000000
-forestdist[1, 1] = 0
-Compute forestdist(1, 3)
-forestdist[1, 2] = 2
-Compute forestdist(1, 4)
-forestdist[1, 3] = 3
-Compute forestdist(1, 0)
-delta[1, 0] = forestdist[0, 3] = 4.000000
-forestdist[1, 4] = 4
-Compute forestdist(3, 1)
-forestdist[2, 1] = 1
-Compute forestdist(3, 3)
-forestdist[2, 2] = 1
-Compute forestdist(3, 4)
-forestdist[2, 3] = 2
-Compute forestdist(3, 0)
-forestdist[2, 4] = 3
-Compute forestdist(4, 1)
-forestdist[3, 1] = 2
-Compute forestdist(4, 3)
+compute forestdist(2, 1)
+initial1 delta_tree[3, 2] = 2
+delete C(2)
+delta_tree[2, 2] = 1
+initial2 delta_tree[2, 2] = 3
+initial3 delta_tree[3, 1] = 2
+da = delta_tree[3, 1] = 2
+db = delta_tree[2, 2] = 3
+db = delta_tree[3, 2] = 2
+da = 3
+db = 4
+dc = 3
+delta_tree[2, 1] = 3
+compute forestdist(2, 2)
 forestdist[3, 2] = 2
-Compute forestdist(4, 4)
-forestdist[3, 3] = 2
-Compute forestdist(4, 0)
-forestdist[3, 4] = 3
-Compute forestdist(2, 1)
-forestdist[4, 1] = 3
-Compute forestdist(2, 3)
-forestdist[4, 2] = 2
-Compute forestdist(2, 4)
-forestdist[4, 3] = 3
-Compute forestdist(2, 0)
-forestdist[4, 4] = 4
-Compute forestdist(5, 1)
+compute forestdist(2, 3)
+forestdist[3, 3] = 3
+compute forestdist(2, 0)
+initial1 delta_tree[3, 1] = 3
+delete C(2)
+delta_tree[2, 1] = 3
+replace C(2) to 0xf4c8a0(1)
+delta_tree[2, 1] = 3
+replace C(2) to 0xf4c930(2)
+delta_tree[2, 2] = 1
+replace C(2) to 0xf4ca00(4)
+delta_tree[2, 4] = 3
+initial2 delta_tree[2, 1] = 3
+initial3 delta_tree[3, 0] = 4
+da = delta_tree[3, 0] = 4
+db = delta_tree[2, 1] = 3
+db = delta_tree[3, 1] = 3
+da = 5
+db = 4
+dc = 4
+delta_tree[2, 0] = 4
+TreeDistance(0, 3) swap = 0
+compute forestdist(1, 3)
+initial1 delta_tree[2, 5] = 0
+delete B(1)
+delta_tree[1, 5] = 1
+initial2 delta_tree[1, 5] = 1
+initial3 delta_tree[2, 4] = 1
+da = delta_tree[2, 4] = 1
+db = delta_tree[1, 5] = 1
+db = delta_tree[2, 5] = 0
+da = 2
+db = 2
+dc = 1
+delta_tree[1, 4] = 1
+compute forestdist(3, 3)
+forestdist[2, 1] = 2
+compute forestdist(4, 3)
+forestdist[3, 1] = 3
+compute forestdist(2, 3)
+forestdist[4, 1] = 4
+compute forestdist(5, 3)
 forestdist[5, 1] = 4
-Compute forestdist(5, 3)
+compute forestdist(0, 3)
+initial1 delta_tree[1, 5] = 5
+delete A(0)
+delta_tree[0, 5] = 6
+initial2 delta_tree[0, 5] = 6
+initial3 delta_tree[1, 4] = 4
+da = delta_tree[1, 4] = 4
+db = delta_tree[0, 5] = 6
+db = delta_tree[1, 5] = 5
+da = 5
+db = 7
+dc = 6
+delta_tree[0, 4] = 5
+TreeDistance(0, 2) swap = 0
+compute forestdist(1, 2)
+initial1 delta_tree[2, 4] = 0
+delete B(1)
+delta_tree[1, 4] = 1
+initial2 delta_tree[1, 4] = 1
+initial3 delta_tree[2, 3] = 1
+initial3 delta_tree[2, 2] = 2
+da = delta_tree[2, 3] = 1
+db = delta_tree[1, 4] = 1
+db = delta_tree[2, 4] = 0
+da = 2
+db = 2
+dc = 1
+delta_tree[1, 3] = 1
+da = delta_tree[2, 2] = 2
+db = delta_tree[1, 3] = 1
+db = delta_tree[2, 3] = 1
+da = 3
+db = 2
+dc = 2
+delta_tree[1, 2] = 2
+compute forestdist(3, 2)
+forestdist[2, 1] = 2
+compute forestdist(4, 2)
+forestdist[3, 1] = 3
+compute forestdist(2, 2)
+forestdist[4, 1] = 2
+compute forestdist(5, 2)
+forestdist[5, 1] = 3
+compute forestdist(0, 2)
+initial1 delta_tree[1, 4] = 5
+delete A(0)
+delta_tree[0, 4] = 5
+initial2 delta_tree[0, 4] = 6
+initial3 delta_tree[1, 3] = 5
+initial3 delta_tree[1, 2] = 5
+da = delta_tree[1, 3] = 5
+db = delta_tree[0, 4] = 6
+db = delta_tree[1, 4] = 5
+da = 6
+db = 7
+dc = 6
+delta_tree[0, 3] = 6
+da = delta_tree[1, 2] = 5
+db = delta_tree[0, 3] = 6
+db = delta_tree[1, 3] = 5
+da = 6
+db = 7
+dc = 6
+delta_tree[0, 2] = 6
+TreeDistance(0, 0) swap = 0
+compute forestdist(1, 1)
+initial1 delta_tree[2, 2] = 0
+delete B(1)
+delta_tree[1, 2] = 2
+initial2 delta_tree[1, 2] = 1
+initial3 delta_tree[2, 1] = 1
+da = delta_tree[2, 1] = 1
+db = delta_tree[1, 2] = 1
+db = delta_tree[2, 2] = 0
+da = 2
+db = 2
+dc = 0
+delta_tree[1, 1] = 0
+compute forestdist(1, 2)
+forestdist[1, 2] = 2
+compute forestdist(1, 3)
+forestdist[1, 3] = 3
+compute forestdist(1, 0)
+initial1 delta_tree[2, 1] = 4
+delete B(1)
+delta_tree[1, 1] = 0
+replace B(1) to 0xf4c8a0(1)
+delta_tree[1, 1] = 0
+replace B(1) to 0xf4c930(2)
+delta_tree[1, 2] = 2
+replace B(1) to 0xf4ca00(4)
+delta_tree[1, 4] = 1
+initial2 delta_tree[1, 1] = 3
+initial3 delta_tree[2, 0] = 5
+da = delta_tree[2, 0] = 5
+db = delta_tree[1, 1] = 3
+db = delta_tree[2, 1] = 4
+da = 6
+db = 4
+dc = 5
+delta_tree[1, 0] = 4
+compute forestdist(3, 1)
+forestdist[2, 1] = 1
+compute forestdist(3, 2)
+forestdist[2, 2] = 1
+compute forestdist(3, 3)
+forestdist[2, 3] = 2
+compute forestdist(3, 0)
+forestdist[2, 4] = 3
+compute forestdist(4, 1)
+forestdist[3, 1] = 2
+compute forestdist(4, 2)
+forestdist[3, 2] = 2
+compute forestdist(4, 3)
+forestdist[3, 3] = 2
+compute forestdist(4, 0)
+forestdist[3, 4] = 3
+compute forestdist(2, 1)
+forestdist[4, 1] = 3
+compute forestdist(2, 2)
+forestdist[4, 2] = 1
+compute forestdist(2, 3)
+forestdist[4, 3] = 2
+compute forestdist(2, 0)
+forestdist[4, 4] = 3
+compute forestdist(5, 1)
+forestdist[5, 1] = 4
+compute forestdist(5, 2)
+forestdist[5, 2] = 2
+compute forestdist(5, 3)
+forestdist[5, 3] = 1
+compute forestdist(5, 0)
+forestdist[5, 4] = 2
+compute forestdist(0, 1)
+initial1 delta_tree[1, 2] = 5
+delete A(0)
+delta_tree[0, 2] = 6
+initial2 delta_tree[0, 2] = 6
+initial3 delta_tree[1, 1] = 4
+da = delta_tree[1, 1] = 4
+db = delta_tree[0, 2] = 6
+db = delta_tree[1, 2] = 5
+da = 5
+db = 7
+dc = 6
+delta_tree[0, 1] = 5
+compute forestdist(0, 2)
+forestdist[6, 2] = 3
+compute forestdist(0, 3)
+forestdist[6, 3] = 2
+compute forestdist(0, 0)
+initial1 delta_tree[1, 1] = 1
+delete A(0)
+delta_tree[0, 1] = 5
+replace A(0) to 0xf4c8a0(1)
+delta_tree[0, 1] = 5
+replace A(0) to 0xf4c930(2)
+delta_tree[0, 2] = 6
+replace A(0) to 0xf4ca00(4)
+delta_tree[0, 4] = 5
+initial2 delta_tree[0, 1] = 2
+initial3 delta_tree[1, 0] = 2
+da = delta_tree[1, 0] = 2
+db = delta_tree[0, 1] = 2
+db = delta_tree[1, 1] = 1
+da = 3
+db = 3
+dc = 1
+delta_tree[0, 0] = 1
+delta Result LL_compressed
+delta_tree
+1 5 6 6 5 6 
+4 0 2 1 1 1 
+4 3 1 2 3 3 
+4 1 1 0 1 1 
+5 1 2 1 1 1 
+4 1 2 1 0 1 
+5 1 2 1 1 0 
+
+delta_compressed_tree
+1 5 6 5 6 
+4 0 2 1 1 
+4 3 1 3 3 
+4 1 1 1 1 
+5 1 2 1 1 
+4 1 2 0 1 
+5 1 2 1 0 
+
+RevTreeDistance(3, 2) swap = 0
+a_rightmost_leaf_in_preL = 3
+b_rightmost_leaf_in_preL = 3
+(3, 4, 3, 3)
+forestdist[1, 1] = 0
+(3, 4, 2, 3)
+forestdist[1, 2] = 1
+RevTreeDistance(3, 1) swap = 0
+a_rightmost_leaf_in_preL = 3
+b_rightmost_leaf_in_preL = 1
+(3, 4, 1, 4)
+forestdist[1, 1] = 1
+RevTreeDistance(3, 0) swap = 0
+a_rightmost_leaf_in_preL = 3
+b_rightmost_leaf_in_preL = 4
+(3, 4, 4, 1)
+forestdist[1, 1] = 1
+(3, 4, 3, 1)
+forestdist[1, 2] = 1
+(3, 4, 2, 1)
+forestdist[1, 3] = 2
+(3, 4, 1, 1)
+forestdist[1, 4] = 3
+(3, 4, 0, 1)
+forestdist[1, 5] = 4
+RevTreeDistance(2, 2) swap = 0
+a_rightmost_leaf_in_preL = 4
+b_rightmost_leaf_in_preL = 3
+(4, 3, 3, 3)
+forestdist[1, 1] = 1
+(4, 3, 2, 3)
+forestdist[1, 2] = 2
+(3, 3, 3, 3)
+forestdist[2, 1] = 1
+(3, 3, 2, 3)
+forestdist[2, 2] = 2
+(2, 3, 3, 3)
+forestdist[3, 1] = 2
+(2, 3, 2, 3)
+forestdist[3, 2] = 1
+RevTreeDistance(2, 1) swap = 0
+a_rightmost_leaf_in_preL = 4
+b_rightmost_leaf_in_preL = 1
+(4, 3, 1, 4)
+forestdist[1, 1] = 1
+(3, 3, 1, 4)
+forestdist[2, 1] = 2
+(2, 3, 1, 4)
+forestdist[3, 1] = 3
+RevTreeDistance(2, 0) swap = 0
+a_rightmost_leaf_in_preL = 4
+b_rightmost_leaf_in_preL = 4
+(4, 3, 4, 1)
+forestdist[1, 1] = 1
+(4, 3, 3, 1)
+forestdist[1, 2] = 2
+(4, 3, 2, 1)
+forestdist[1, 3] = 3
+(4, 3, 1, 1)
+forestdist[1, 4] = 4
+(4, 3, 0, 1)
+forestdist[1, 5] = 5
+(3, 3, 4, 1)
+forestdist[2, 1] = 2
+(3, 3, 3, 1)
+forestdist[2, 2] = 1
+(3, 3, 2, 1)
+forestdist[2, 3] = 2
+(3, 3, 1, 1)
+forestdist[2, 4] = 3
+(3, 3, 0, 1)
+forestdist[2, 5] = 4
+(2, 3, 4, 1)
+forestdist[3, 1] = 3
+(2, 3, 3, 1)
+forestdist[3, 2] = 2
+(2, 3, 2, 1)
+forestdist[3, 3] = 2
+(2, 3, 1, 1)
+forestdist[3, 4] = 3
+(2, 3, 0, 1)
+forestdist[3, 5] = 4
+RevTreeDistance(1, 2) swap = 0
+a_rightmost_leaf_in_preL = 1
+b_rightmost_leaf_in_preL = 3
+(1, 5, 3, 3)
+forestdist[1, 1] = 1
+(1, 5, 2, 3)
+forestdist[1, 2] = 2
+RevTreeDistance(1, 1) swap = 0
+a_rightmost_leaf_in_preL = 1
+b_rightmost_leaf_in_preL = 1
+(1, 5, 1, 4)
+forestdist[1, 1] = 0
+RevTreeDistance(1, 0) swap = 0
+a_rightmost_leaf_in_preL = 1
+b_rightmost_leaf_in_preL = 4
+(1, 5, 4, 1)
+forestdist[1, 1] = 1
+(1, 5, 3, 1)
+forestdist[1, 2] = 2
+(1, 5, 2, 1)
+forestdist[1, 3] = 3
+(1, 5, 1, 1)
+forestdist[1, 4] = 3
+(1, 5, 0, 1)
+forestdist[1, 5] = 4
+RevTreeDistance(0, 2) swap = 0
+a_rightmost_leaf_in_preL = 5
+b_rightmost_leaf_in_preL = 3
+(5, 1, 3, 3)
+forestdist[1, 1] = 1
+(5, 1, 2, 3)
+forestdist[1, 2] = 2
+(4, 1, 3, 3)
+forestdist[2, 1] = 2
+(4, 1, 2, 3)
+forestdist[2, 2] = 3
+(3, 1, 3, 3)
+forestdist[3, 1] = 2
+(3, 1, 2, 3)
+forestdist[3, 2] = 3
+(2, 1, 3, 3)
+forestdist[4, 1] = 3
+(2, 1, 2, 3)
+forestdist[4, 2] = 2
+(1, 1, 3, 3)
+forestdist[5, 1] = 4
+(1, 1, 2, 3)
 forestdist[5, 2] = 3
-Compute forestdist(5, 4)
-forestdist[5, 3] = 2
-Compute forestdist(5, 0)
-forestdist[5, 4] = 3
-Compute forestdist(0, 1)
-delta[0, 1] = forestdist[5, 0] = 5.000000
+(0, 1, 3, 3)
 forestdist[6, 1] = 5
-Compute forestdist(0, 3)
+(0, 1, 2, 3)
 forestdist[6, 2] = 4
-Compute forestdist(0, 4)
+RevTreeDistance(0, 1) swap = 0
+a_rightmost_leaf_in_preL = 5
+b_rightmost_leaf_in_preL = 1
+(5, 1, 1, 4)
+forestdist[1, 1] = 1
+(4, 1, 1, 4)
+forestdist[2, 1] = 2
+(3, 1, 1, 4)
+forestdist[3, 1] = 3
+(2, 1, 1, 4)
+forestdist[4, 1] = 4
+(1, 1, 1, 4)
+forestdist[5, 1] = 4
+(0, 1, 1, 4)
+forestdist[6, 1] = 5
+RevTreeDistance(0, 0) swap = 0
+a_rightmost_leaf_in_preL = 5
+b_rightmost_leaf_in_preL = 4
+(5, 1, 4, 1)
+forestdist[1, 1] = 0
+(5, 1, 3, 1)
+forestdist[1, 2] = 1
+(5, 1, 2, 1)
+forestdist[1, 3] = 2
+(5, 1, 1, 1)
+forestdist[1, 4] = 3
+(5, 1, 0, 1)
+forestdist[1, 5] = 4
+(4, 1, 4, 1)
+forestdist[2, 1] = 1
+(4, 1, 3, 1)
+forestdist[2, 2] = 1
+(4, 1, 2, 1)
+forestdist[2, 3] = 2
+(4, 1, 1, 1)
+forestdist[2, 4] = 3
+(4, 1, 0, 1)
+forestdist[2, 5] = 4
+(3, 1, 4, 1)
+forestdist[3, 1] = 2
+(3, 1, 3, 1)
+forestdist[3, 2] = 1
+(3, 1, 2, 1)
+forestdist[3, 3] = 2
+(3, 1, 1, 1)
+forestdist[3, 4] = 3
+(3, 1, 0, 1)
+forestdist[3, 5] = 4
+(2, 1, 4, 1)
+forestdist[4, 1] = 3
+(2, 1, 3, 1)
+forestdist[4, 2] = 2
+(2, 1, 2, 1)
+forestdist[4, 3] = 1
+(2, 1, 1, 1)
+forestdist[4, 4] = 2
+(2, 1, 0, 1)
+forestdist[4, 5] = 3
+(1, 1, 4, 1)
+forestdist[5, 1] = 4
+(1, 1, 3, 1)
+forestdist[5, 2] = 3
+(1, 1, 2, 1)
+forestdist[5, 3] = 2
+(1, 1, 1, 1)
+forestdist[5, 4] = 1
+(1, 1, 0, 1)
+forestdist[5, 5] = 2
+(0, 1, 4, 1)
+forestdist[6, 1] = 5
+(0, 1, 3, 1)
+forestdist[6, 2] = 4
+(0, 1, 2, 1)
 forestdist[6, 3] = 3
-Compute forestdist(0, 0)
-delta[0, 0] = forestdist[5, 3] = 2.000000
+(0, 1, 1, 1)
 forestdist[6, 4] = 2
-delta Result LL
-2 5 4 5 5 
+(0, 1, 0, 1)
+forestdist[6, 5] = 1
+delta Result RR
+1 5 4 5 5 
 4 0 1 0 0 
-3 2 2 2 2 
+3 2 1 2 2 
 4 0 1 0 0 
 4 0 1 0 0 
 4 0 1 0 0 

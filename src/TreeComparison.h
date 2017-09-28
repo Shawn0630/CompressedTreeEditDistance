@@ -42,6 +42,8 @@ private:
 	bool** hasVisited;
 
 	float** delta;
+	float** delta_tree;
+	float** delta_compressed_tree;
 	float** s;
 	float** t;
 	float* q;
@@ -68,7 +70,6 @@ private:
 	void deltaInit();
 	float gted(Node*, Node*);
 	float gted_ND(Node*, Node*);
-	//void gteo(Node*, Node*);
 	void gteo_LL(Node* a, Node* b);
 	int getPathType(Tree*, Node*, int);
 	void computeSumInsAndDelCost_compressed(CompressedTree*);
@@ -92,7 +93,7 @@ private:
 	int computeKeyRoots_compressed(CompressedTree*, Node*, int, int*, int);
 	int computeRevKeyRoots(Tree*, Node*, int, int*, int);
 	float treeEditDist(Node*, Node*, float**, bool, bool);
-	float treeEditDist_compressed(Node*, Node*, float**, bool, int, int, bool);
+	float treeEditDist_compressed(Node*, Node*, bool);
 	float revTreeEditDist(Node*, Node*, float**, bool, bool);	
 
 	Strategy** APTED_ComputeOptStrategy_postL();

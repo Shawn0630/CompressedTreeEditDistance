@@ -130,7 +130,6 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     1); 
-  cout << map->toString();
   cout << "Operation count: " << map->getCount() << endl;
   cout << "Pass" << endl;
 

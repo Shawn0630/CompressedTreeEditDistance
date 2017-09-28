@@ -49,6 +49,7 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
 	AllBStrategies = new Strategy*[treeSizeA];
 	FreeStrategies = new Strategy*[treeSizeA];
 	delta = new float*[treeSizeA];
+  delta_tree = new float*[treeSizeA + 1];
 	hasVisited = new bool*[treeSizeA];
 
 	for(int i = 0; i < treeSizeA; i++) {
@@ -67,8 +68,12 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
 		AllBStrategies[i] = new Strategy[treeSizeB];
 		FreeStrategies[i] = new Strategy[treeSizeB];
 		delta[i] = new float[treeSizeB];
+    delta_tree[i] = new float[treeSizeB + 1];
 		hasVisited[i] = new bool[treeSizeB];
 	}
+
+  delta_tree[treeSizeA] = new float[treeSizeB + 1];
+
 
 	s = new float*[maxSize - 1];
 	t = new float*[maxSize - 1];
@@ -100,6 +105,10 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
   cA_ = new CompressedTree(A_);
   cB_ = new CompressedTree(B_);
 
+
+  compressedTreeSizeA = cA_->getTreeSize();
+  compressedTreeSizeB = cB_->getTreeSize();
+
   computeSumInsAndDelCost_compressed(cA_);
   computeSumInsAndDelCost_compressed(cB_);
 
@@ -109,6 +118,12 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
     ou << "CompressedTree B" << endl;
     ou << cB_->toString() << endl;
   }
+
+  delta_compressed_tree = new float*[compressedTreeSizeA + 1];
+  for(int i = 0; i < compressedTreeSizeA; i++) {
+    delta_compressed_tree[i] = new float[compressedTreeSizeB + 1];
+  }
+  delta_compressed_tree[compressedTreeSizeA] = new float[compressedTreeSizeB + 1];
   deltaInit();
 
 };
@@ -163,6 +178,7 @@ void TreeComparison::init(string fileName) {
   AllBStrategies = new Strategy*[treeSizeA];
   FreeStrategies = new Strategy*[treeSizeA];
   delta = new float*[treeSizeA];
+  delta_tree = new float*[treeSizeA + 1];
   hasVisited = new bool*[treeSizeA];
 
   for(int i = 0; i < treeSizeA; i++) {
@@ -181,8 +197,10 @@ void TreeComparison::init(string fileName) {
     AllBStrategies[i] = new Strategy[treeSizeB];
     FreeStrategies[i] = new Strategy[treeSizeB];
     delta[i] = new float[treeSizeB];
+    delta_tree[i] = new float[treeSizeB + 1];
     hasVisited[i] = new bool[treeSizeB];
   }
+  delta_tree[treeSizeA] = new float[treeSizeB + 1];
 
   s = new float*[maxSize - 1];
   t = new float*[maxSize - 1];
@@ -220,6 +238,12 @@ void TreeComparison::init(string fileName) {
   computeSumInsAndDelCost_compressed(cA_);
   computeSumInsAndDelCost_compressed(cB_);
 
+  delta_compressed_tree = new float*[compressedTreeSizeA + 1];
+  for(int i = 0; i < compressedTreeSizeA; i++) {
+    delta_compressed_tree[i] = new float[compressedTreeSizeB + 1];
+  }
+  delta_compressed_tree[compressedTreeSizeA] = new float[compressedTreeSizeB + 1];
+
   if(DEBUG) {
     ou << "CompressedTree A" << endl;
     ou << cA_->toString() << endl;
@@ -247,6 +271,24 @@ void TreeComparison::deltaInit() {
 			}
 		}
 	}
+
+  delta_tree[treeSizeA][treeSizeB] = 0.0f;
+  for(int j = 0; j < treeSizeB; j++) {
+    delta_tree[treeSizeA][j] = B_->preL_to_sumInsCost[j];
+  }
+
+  for(int i = 0; i < treeSizeA; i++) {
+    delta_tree[i][treeSizeB] = A_->preL_to_sumDelCost[i];
+  }
+
+  delta_compressed_tree[compressedTreeSizeA][compressedTreeSizeB] = 0.0f;
+  for(int j = 0; j < compressedTreeSizeB; j++) {
+    delta_compressed_tree[compressedTreeSizeA][j] = cB_->preL_to_sumInsCost[j];
+  }
+
+  for(int i = 0; i < compressedTreeSizeA; i++) {
+    delta_compressed_tree[i][compressedTreeSizeB] = cA_->preL_to_sumDelCost[i];
+  }
 };
 
 
@@ -1113,93 +1155,29 @@ float TreeComparison::spfLL(Node* a, Node* b, int leaf, bool swap) {
 
 float TreeComparison::spfLL_compressed(Node* a, Node* b, int leaf, bool swap) {
   CompressedTree *cF, *cG;
-  Tree *F, *G;
   if(swap) {
     cF = cB_;
-    F = B_;
     cG = cA_;
-    G = A_;
   } else {
     cF = cA_;
-    F = A_;
     cG = cB_;
-    G = B_;
   }
   if(DEBUG) {
     cout << "spfLL_compressed(" << a->getID() << ", " << b->getID() << ") counter = " << counter << endl;
   }
 
-  float dist = 0;
-  int a_in_original = cF->compressed_to_original[a->getID()][0];
-  int b_in_original = cG->compressed_to_original[b->getID()][0];
-  float** forestdist = new float*[(*F)[a->getID()]->getSubTreeSize() + 1];//consider the null
-  for(int i = 0; i < (*F)[a_in_original]->getSubTreeSize() + 1; i++) {//consider the null
-    forestdist[i] = new float[(*G)[b_in_original]->getSubTreeSize() + 1];
-  }
-  for(int i = 0; i < a->getSubTreeSize(); i++) {
-    for(int j = 0; j < b->getSubTreeSize(); j++) {
-      int preL_in_cF = cF->postL_to_preL[i];
-      int preL_in_cG = cG->postL_to_preL[j];
-      vector<int> cF_in_original = cF->compressed_to_original[preL_in_cF];
-      vector<int> cG_in_original = cG->compressed_to_original[preL_in_cG];
-
-      for(int Foff = 0; Foff < cF_in_original.size(); Foff++) {
-        for(int Goff = 0; Goff < cG_in_original.size(); Goff++) {
-          dist = treeEditDist_compressed((*cF)[preL_in_cF], (*cG)[preL_in_cG], forestdist, swap, Foff, Goff, false);
-        }
-      }
-    }
-  }
-/*  int* cGkeyRoots = new int[(*cG)[b->getID()]->getSubTreeSize()];
+  int* cGkeyRoots = new int[b->getSubTreeSize()];
   int cGfirstKeyRoot = computeKeyRoots_compressed(cG, b, cG->preL_to_lid[b->getID()], cGkeyRoots, 0);  
 
-  int* cFkeyRoots = new int[(*cF)[a->getID()]->getSubTreeSize()];
+  int* cFkeyRoots = new int[a->getSubTreeSize()];
   int cFfirstKeyRoot = computeKeyRoots_compressed(cF, a, cF->preL_to_lid[a->getID()], cFkeyRoots, 0);
 
-  int a_in_original = cF->compressed_to_original[a->getID()][0];
-  int b_in_original = cG->compressed_to_original[b->getID()][0];
-  float** forestdist = new float*[(*F)[a->getID()]->getSubTreeSize() + 1];//consider the null
-  for(int i = 0; i < (*F)[a_in_original]->getSubTreeSize() + 1; i++) {//consider the null
-    forestdist[i] = new float[(*G)[b_in_original]->getSubTreeSize() + 1];
-  }
-  if(DEBUG) {
-    ou << "FkeyRoots" << endl;
-    for(int i = cFfirstKeyRoot - 1; i >= 0; i--) {
-      ou << cFkeyRoots[i] << " ";
-    }
-    ou << endl;
-  }
-  if(DEBUG) {
-    ou << "GkeyRoots" << endl;
-    for(int i = cGfirstKeyRoot - 1; i >= 0; i--) {
-      ou << cGkeyRoots[i] << " ";
-    }
-    ou << endl;
-  }
   float dist = 0;
   for (int i = cFfirstKeyRoot - 1; i >= 0; i--) {
     for (int j = cGfirstKeyRoot - 1; j >= 0; j--) {
-      vector<int> cFkeyRoots_in_original = cF->compressed_to_original[cFkeyRoots[i]];
-      vector<int> cGkeyRoots_in_original = cG->compressed_to_original[cGkeyRoots[j]];
-      if(DEBUG) {
-        ou << "cFkeyRoots_in_original" << endl;
-        for(int k = 0; k < cFkeyRoots_in_original.size(); k++) {
-          ou << cFkeyRoots_in_original[k] << " ";
-        }
-        ou << endl;
-        ou << "cGkeyRoots_in_original" << endl;
-        for(int k = 0; k < cGkeyRoots_in_original.size(); k++) {
-          ou << cGkeyRoots_in_original[k] << " ";
-        }
-        ou << endl;
-      }
-      for(int Foff = 0; Foff < cFkeyRoots_in_original.size(); Foff++) {
-        for(int Goff = 0; Goff < cGkeyRoots_in_original.size(); Goff++) {
-          dist = treeEditDist_compressed((*cF)[cFkeyRoots[i]], (*cG)[cGkeyRoots[j]], forestdist, swap, Foff, Goff, false);
-        }
-      }
+      dist = treeEditDist_compressed((*cF)[cFkeyRoots[i]], (*cG)[cGkeyRoots[j]], swap);
     }
-  }*/
+  }
   return dist;
 }
 
@@ -1391,9 +1369,9 @@ float TreeComparison::treeEditDist(Node* a, Node* b, float** forestdist, bool sw
       counter++;
       int a1_plus_aoff_in_preL = F->postL_to_preL[a1 + aoff];
       int b1_plus_boff_in_preL = G->postL_to_preL[b1 + boff];
-      /*if(DEBUG) {
+      if(DEBUG) {
         ou << "Compute forestdist(" << to_string(a1_plus_aoff_in_preL) << ", " << to_string(b1_plus_boff_in_preL) << ")" << endl;
-      }*/
+      }
       float u = (swap ? costModel_.ren((*G)[b1_plus_boff_in_preL]->getLabel(), (*F)[a1_plus_aoff_in_preL]->getLabel()) : costModel_.ren((*F)[a1_plus_aoff_in_preL]->getLabel(), (*G)[b1_plus_boff_in_preL]->getLabel())); // USE COST MODEL - rename a1 to g1.
       
       da = forestdist[a1 - 1][b1] + (swap ? costModel_.ins((*F)[a1_plus_aoff_in_preL]->getLabel()) : costModel_.del((*F)[a1_plus_aoff_in_preL]->getLabel())); // USE COST MODEL - delete a1.
@@ -1461,7 +1439,11 @@ float TreeComparison::treeEditDist(Node* a, Node* b, float** forestdist, bool sw
   return dist;
 }
 
-float TreeComparison::treeEditDist_compressed(Node* a, Node* b, float** forestdist, bool swap, int aoff_original, int boff_original, bool mark) {
+float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
+
+  if(DEBUG) {
+    ou << "TreeDistance(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ") swap = " << swap << endl;
+  }
   Tree *F, *G;
   CompressedTree *cF, *cG;
   if(swap) {
@@ -1475,15 +1457,15 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, float** forestdi
     G = B_;
     cG = cB_;
   }
+
+  float** forestdist = new float*[a->getSubTreeSize() + 1];//consider the null
+  for(int i = 0; i < a->getSubTreeSize() + 1; i++) {//consider the null
+    forestdist[i] = new float[b->getSubTreeSize() + 1];
+  }
+
+
   int a_in_compressed_in_preL = a->getID();
   int b_in_compressed_in_preL = b->getID();
-
-  vector<int> a_in_original = cF->compressed_to_original[a_in_compressed_in_preL];
-  vector<int> b_in_original = cG->compressed_to_original[b_in_compressed_in_preL];
-
-  if(DEBUG) {
-    ou << "TreeDistance_compressed(" << to_string(a_in_original[a_in_original.size() - 1 - aoff_original]) << ", " << to_string(b_in_original[b_in_original.size() - 1 - boff_original]) << ") swap = " << swap << endl;
-  }
 
   int a_in_compressed_in_postL = cF->preL_to_postL[a_in_compressed_in_preL];
   int b_in_compressed_in_postL = cG->preL_to_postL[b_in_compressed_in_preL];
@@ -1497,15 +1479,6 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, float** forestdi
   int aoff = a_leftmost_leaf_in_compressed_in_postL - 1;//not tree-tree distance but tree-tree remove the root
   int boff = b_leftmost_leaf_in_compressed_in_postL - 1;//not tree-tree distance but tree-tree remove the root
 
-  if(DEBUG) {
-    ou << "a_in_compressed_in_postL = " << to_string(a_in_compressed_in_postL) << " b_in_compressed_in_postL = " << to_string(b_in_compressed_in_postL) << endl;
-    ou << "aoff = " << to_string(aoff) << " boff = " << boff << endl;
-  }
-
-  /*if(DEBUG) {
-    ou << "aoff = " << to_string(aoff) << endl;
-    ou << "boff = " << to_string(boff) << endl;
-  }*/
 
   float da = 0;
   float db = 0;
@@ -1513,235 +1486,240 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, float** forestdi
   float dist = 0;
 
   forestdist[0][0] = 0;
-  int a1 = 1;
-  for (a1 = 1; a1 < a_in_compressed_in_postL - aoff; a1++) {
+  for (int a1 = 1; a1 <= a_in_compressed_in_postL - aoff; a1++) {
     int a1_plus_aoff_in_preL = cF->postL_to_preL[a1 + aoff];
     forestdist[a1][0] = forestdist[a1 - 1][0] + (swap ? cF->preL_to_InsCost[a1_plus_aoff_in_preL]: cF->preL_to_DelCost[a1_plus_aoff_in_preL]); // USE COST MODEL - delete a1.
   }
 
-  for (int i = 0; i <= aoff_original; i++, a1++) {
-    int a_in_original_in_preL = a_in_original[a_in_original.size() - 1 - i];
-    forestdist[a1][0] = forestdist[a1 - 1][0] + (swap ? costModel_.ins((*F)[a_in_original_in_preL]->getLabel()) : costModel_.del((*F)[a_in_original_in_preL]->getLabel()));
-  }
-  int b1 = 1;
-  for (b1 = 1; b1 < b_in_compressed_in_postL - boff; b1++) {
+  for (int b1 = 1; b1 <= b_in_compressed_in_postL - boff; b1++) {
     int b1_plus_boff_in_preL = cG->postL_to_preL[b1 + boff];
     forestdist[0][b1] = forestdist[0][b1 - 1] + (swap ? cG->preL_to_DelCost[b1_plus_boff_in_preL] : cG->preL_to_InsCost[b1_plus_boff_in_preL]); // USE COST MODEL - insert b1.
   }
-  for (int i = 0; i <= boff_original; i++, b1++) {
-    int b_in_original_in_preL = b_in_original[b_in_original.size() - 1 - i];
-    forestdist[0][b1] = forestdist[0][b1 - 1] + (swap ? costModel_.del((*G)[b_in_original_in_preL]->getLabel()) : costModel_.del((*G)[b_in_original_in_preL]->getLabel()));
-  }
 
   // Fill in the remaining costs.
-  a1 = 1;
-  b1 = 1;
-  for (a1 = 1; a1 <= a_in_compressed_in_postL - aoff; a1++) {
-    for (b1 = 1; b1 <= b_in_compressed_in_postL - boff; b1++) {
+  for (int a1 = 1; a1 <= a_in_compressed_in_postL - aoff; a1++) {
+    for (int b1 = 1; b1 <= b_in_compressed_in_postL - boff; b1++) {
       counter++;
       int a1_plus_aoff_in_compressed_preL = cF->postL_to_preL[a1 + aoff];
       int b1_plus_boff_in_compressed_preL = cG->postL_to_preL[b1 + boff];
-      int a1_plus_aoff_in_original_preL = cF->compressed_to_original[a1_plus_aoff_in_compressed_preL][cF->compressed_to_original[a1_plus_aoff_in_compressed_preL].size() - 1];
-      int b1_plus_boff_in_original_preL = cG->compressed_to_original[b1_plus_boff_in_compressed_preL][cG->compressed_to_original[b1_plus_boff_in_compressed_preL].size() - 1]; 
-      
       if(DEBUG) {
-        ou << "Compute forestdist(" << to_string(a1_plus_aoff_in_original_preL) << ", " << to_string(b1_plus_boff_in_original_preL) << ")" << endl;
+        ou << "compute forestdist(" << a1_plus_aoff_in_compressed_preL << ", " << b1_plus_boff_in_compressed_preL << ")" << endl;
       }
-      float u = (swap ? costModel_.ren((*G)[b1_plus_boff_in_original_preL]->getLabel(), (*F)[a1_plus_aoff_in_original_preL]->getLabel()) : costModel_.ren((*F)[a1_plus_aoff_in_original_preL]->getLabel(), (*G)[b1_plus_boff_in_original_preL]->getLabel())); // USE COST MODEL - rename a1 to g1.
-      
-      da = forestdist[a1 - 1][b1] + (swap ? cF->preL_to_InsCost[a1_plus_aoff_in_compressed_preL] : cF->preL_to_DelCost[a1_plus_aoff_in_compressed_preL]); // USE COST MODEL - delete a1.
-    /*  if(DEBUG) {
-        ou << "forestdist[" << to_string(a1 - 1) << ", " << to_string(b1) << "] = " << to_string(forestdist[a1 - 1][b1]) << " ";
-        if(swap) ou << "insert F " << (*F)[a1_plus_aoff_in_preL]->getLabel() << " + " << costModel_.ins((*F)[a1_plus_aoff_in_preL]->getLabel());
-        else ou << "delete F " << (*F)[a1_plus_aoff_in_preL]->getLabel() << " + " << costModel_.del((*F)[a1_plus_aoff_in_preL]->getLabel());
-        ou << " da = " << to_string(da) << endl;
-      }*/
-      db = forestdist[a1][b1 - 1] + (swap ? cG->preL_to_DelCost[b1_plus_boff_in_compressed_preL] : cG->preL_to_InsCost[b1_plus_boff_in_compressed_preL]); // USE COST MODEL - insert b1.
-      /*if(DEBUG) {
-        ou << "forestdist[" << to_string(a1) << ", " << to_string(b1 - 1) << "] = " << to_string(forestdist[a1][b1 - 1]) << " ";
-        if(swap) ou << "delete G " << (*G)[b1_plus_boff_in_preL]->getLabel() << " + " << costModel_.del((*G)[b1_plus_boff_in_preL]->getLabel());
-        else ou << "insert G " << (*G)[b1_plus_boff_in_preL]->getLabel() << " + " << costModel_.ins((*G)[b1_plus_boff_in_preL]->getLabel());
-        ou << " db = " << to_string(db) << endl;
-      }*/
+
+      vector<int> a1_plus_aoff_in_original_preLs = cF->compressed_to_original[a1_plus_aoff_in_compressed_preL];
+      vector<int> b1_plus_boff_in_original_preLs = cG->compressed_to_original[b1_plus_boff_in_compressed_preL];
+  
       // If current subforests are subtrees. 
       int a1_leftmost_leaf_in_compressed = cF->preL_to_lid[a1_plus_aoff_in_compressed_preL];
       int b1_leftmost_leaf_in_compressed = cG->preL_to_lid[b1_plus_boff_in_compressed_preL];
       int a1_leftmost_leaf_in_compressed_postL = cF->preL_to_postL[a1_leftmost_leaf_in_compressed];
       int b1_leftmost_leaf_in_compressed_postL = cG->preL_to_postL[b1_leftmost_leaf_in_compressed];
-      /*if(DEBUG) {
-        ou << "a1_preL = " << to_string(a1_preL) << " a1_leftmost_leaf = " << to_string(a1_leftmost_leaf) << " a_leftmost_leaf_in_preL = " << to_string(a_leftmost_leaf_in_preL) << endl;
-        ou << "b1_preL = " << to_string(b1_preL) << " b1_leftmost_leaf = " << to_string(b1_leftmost_leaf) << " b_leftmost_leaf_in_preL = " << to_string(b_leftmost_leaf_in_preL) << endl; 
-      }*/
 
-      
-      if (a_leftmost_leaf_in_compressed_in_preL == a1_leftmost_leaf_in_compressed && b_leftmost_leaf_in_compressed_in_preL == b1_leftmost_leaf_in_compressed) {//is a tree means haven't computed
-         dc = forestdist[a1 - 1][b1 - 1] + u;
-         /*if(DEBUG) {
-          if(swap) ou << (*G)[b1_plus_boff_in_preL]->getLabel() << " -> " << (*F)[a1_plus_aoff_in_preL]->getLabel();
-          else ou << (*F)[a1_plus_aoff_in_preL]->getLabel() << " -> " << (*G)[b1_plus_boff_in_preL]->getLabel();
-          ou << " dc = " << to_string(dc) << endl;
-         }*/
-         
-         if (swap) {
-           delta[b1_plus_boff_in_original_preL][a1_plus_aoff_in_original_preL] = forestdist[a1 - 1][b1 - 1];
-           if(DEBUG) {
-            ou << "delta[" << to_string(b1_plus_boff_in_original_preL) << ", " << to_string(a1_plus_aoff_in_original_preL) << "] = forestdist[" << to_string(a1 - 1) << ", " << to_string(b1 - 1) << "] = " << to_string(delta[b1_plus_boff_in_original_preL][a1_plus_aoff_in_original_preL]) << endl;
-           }
-         } else {
-           delta[a1_plus_aoff_in_original_preL][b1_plus_boff_in_original_preL] = forestdist[a1 - 1][b1 - 1];
-           if(DEBUG) {
-            ou << "delta[" << to_string(a1_plus_aoff_in_original_preL) << ", " << to_string(b1_plus_boff_in_original_preL) << "] = forestdist[" << to_string(a1 - 1) << ", " << to_string(b1 - 1) << "] = " << to_string(delta[a1_plus_aoff_in_original_preL][b1_plus_boff_in_original_preL]) << endl;
-           }
-         }
+      if (a_leftmost_leaf_in_compressed_in_preL == a1_leftmost_leaf_in_compressed && b_leftmost_leaf_in_compressed_in_preL == b1_leftmost_leaf_in_compressed) {//is a tree means haven't computed     
+        int alpha_i = a1_plus_aoff_in_original_preLs[0];
+        int beta_i = a1_plus_aoff_in_original_preLs[a1_plus_aoff_in_original_preLs.size() - 1];
+        int alpha_j = b1_plus_boff_in_original_preLs[0];
+        int beta_j = b1_plus_boff_in_original_preLs[b1_plus_boff_in_original_preLs.size() - 1];
+/*        if(DEBUG) {
+          ou << "alpha_i = " << alpha_i << ", beta_i = " << beta_i << ", alpha_j = " << alpha_j << ", beta_j = " << beta_j << endl;
+        }*/
+
+        int* A1 = new int[compressedTreeSizeA + 1];
+        int* A2 = new int[compressedTreeSizeB + 1];
+        for(int i = beta_i + 1; i >= alpha_i; i--) {
+          if(swap) A1[i] = delta_tree[beta_j + 1][i];
+          else A1[i] = delta_tree[i][beta_j + 1];
+        }
+        for(int j = beta_j; j >= alpha_j; j--) {
+          if(swap) A2[j] = delta_tree[j][beta_i + 1];
+          else A2[j] = delta_tree[beta_i + 1][j];
+        }
+
+
+        if(swap) {
+          delta_tree[beta_j + 1][beta_i + 1] = forestdist[a1 - 1][b1 - 1];
+          if(DEBUG) {
+            ou << "initial1 delta_tree[" << beta_j + 1 << ", " << beta_i + 1 << "] = " << delta_tree[beta_j + 1][beta_i + 1] << endl;
+          }
+        } else {
+          delta_tree[beta_i + 1][beta_j + 1] = forestdist[a1 - 1][b1 - 1];
+          if(DEBUG) {
+            ou << "initial1 delta_tree[" << beta_i + 1 << ", " << beta_j + 1 << "] = " << delta_tree[beta_i + 1][beta_j + 1] << endl;
+          }
+        }
+
+
+        for(int i = a1_plus_aoff_in_original_preLs.size() - 1; i >=0; i--) {
+          int u = a1_plus_aoff_in_original_preLs[i];
+          vector<Node*> children = (*cG)[b1_plus_boff_in_compressed_preL]->getChildren();
+          float da = (swap? (delta_tree[beta_j + 1][u + 1] + costModel_.ins((*F)[u]->getLabel())) : (delta_tree[u + 1][beta_j + 1] + costModel_.del((*F)[u]->getLabel())));
+          if(DEBUG) {
+            ou << "delete " << (*F)[u]->getLabel() << "(" << u << ")" << endl;
+            if(swap) {
+              ou << "delta_tree[" << beta_j + 1 << ", " << u << "] = " << delta_tree[beta_j + 1][u] << endl;
+            } else {
+              ou << "delta_tree[" << u << ", " << beta_j + 1 << "] = " << delta_tree[u][beta_j + 1] << endl;
+            }
+          }
+          float min = FLT_MAX;
+          for(int k = 0; k < children.size(); k++) {
+            int q = children[k]->getID();
+            int q_in_original = cG->compressed_to_original[q][0];
+            float t = (swap? (delta_tree[q_in_original][u] - G->preL_to_sumDelCost[q_in_original]) : (delta_tree[u][q_in_original] - G->preL_to_sumInsCost[q_in_original]));
+            if(DEBUG) {
+              ou << "replace " << (*F)[u]->getLabel() << "(" << u << ") to " << (*G)[q_in_original] << "(" << q_in_original << ")" << endl; 
+              if(swap) {
+                ou << "delta_tree[" << q_in_original << ", " << u << "] = " << delta_tree[q_in_original][u] << endl;
+              } else {
+                ou << "delta_tree[" << u << ", " << q_in_original << "] = " << delta_tree[u][q_in_original] << endl;
+              }
+            }
+            if(t < min) {
+              min = t;
+            }
+          }
+          min += (swap? (G->preL_to_sumDelCost[beta_j] - costModel_.del((*G)[beta_j]->getLabel())) : (G->preL_to_sumInsCost[beta_j] - costModel_.ins((*G)[beta_j]->getLabel())));
+
+          if(da < min) {
+            min = da;
+          }
+        
+          if(swap) {
+            delta_tree[beta_j + 1][u] = min;
+            if(DEBUG) {
+              ou << "initial2 delta_tree[" << beta_j + 1 << ", " << u << "] = " << delta_tree[beta_j + 1][u] << endl;
+            }
+            if(i != 0) {
+              delta[beta_j][u - 1] = min;
+            }
+          } else {
+            delta_tree[u][beta_j + 1] = min;
+            if(DEBUG) {
+              ou << "initial2 delta_tree[" << u << ", " << beta_j + 1 << "] = " << delta_tree[u][beta_j + 1] << endl;
+            }
+            if(i != 0) {
+              delta[u - 1][beta_j] = min;
+            }
+          }
+        }
+
+        for(int j = b1_plus_boff_in_original_preLs.size() - 1; j >= 0; j--) {
+          int v = b1_plus_boff_in_original_preLs[j];
+          vector<Node*> children = (*cF)[a1_plus_aoff_in_compressed_preL]->getChildren();
+          float da = (swap? (delta_tree[v + 1][beta_i + 1] + costModel_.del((*G)[v]->getLabel())) : (delta_tree[beta_i + 1][v + 1] + costModel_.ins((*G)[v]->getLabel())));
+          float min = FLT_MAX;
+          for(int k = 0; k < children.size(); k++) {
+            int q = children[k]->getID();
+            int q_in_original = cF->compressed_to_original[q][0];
+            float t = (swap? (delta_tree[v][q_in_original] - costModel_.ins((*F)[q_in_original]->getLabel())) : (delta_tree[q_in_original][v] - costModel_.del((*F)[q_in_original]->getLabel())));
+            if(t < min) {
+              min = t;
+            }
+          }
+          min += (swap? (F->preL_to_sumInsCost[beta_i] - costModel_.ins((*F)[beta_i]->getLabel())) : (F->preL_to_sumDelCost[beta_i] - costModel_.del((*F)[beta_i]->getLabel())));
+
+          if(da < min) {
+            min = da;
+          }
+
+          if(swap) {
+            delta_tree[v][beta_i + 1] = min;
+            if(DEBUG) {
+              ou << "initial3 delta_tree[" << v << ", " << beta_i + 1 << "] = " << delta_tree[v][beta_i + 1] << endl;
+            }
+            if(j != 0) {
+              delta[v - 1][beta_i - 1] = min;
+            }
+          } else {
+            delta_tree[beta_i + 1][v] = min;
+            if(DEBUG) {
+              ou << "initial3 delta_tree[" << beta_i + 1 << ", " << v << "] = " << delta_tree[beta_i + 1][v] << endl;
+            }
+            if(j != 0) {
+              delta[beta_i][v - 1] = min;
+            }
+          }
+        }
+
+        for(int i = a1_plus_aoff_in_original_preLs.size() - 1; i >= 0; i--) {
+          for(int j = b1_plus_boff_in_original_preLs.size() - 1; j >= 0;j--) {
+            int u = a1_plus_aoff_in_original_preLs[i];
+            int v = b1_plus_boff_in_original_preLs[j];
+            float da = (swap? (delta_tree[v][u + 1] + costModel_.ins((*F)[u]->getLabel())) : (delta_tree[u + 1][v] + costModel_.del((*F)[u]->getLabel())));
+            if(DEBUG) {
+              ou << "da = delta_tree[";
+              if(swap) ou << v << ", " << u + 1 << "] =" << delta_tree[v][u + 1] << endl;
+              else ou << u + 1 << ", " << v << "] = " << delta_tree[u + 1][v] << endl;
+            }
+            float db = (swap? (delta_tree[v + 1][u] + costModel_.del((*G)[v]->getLabel())) : (delta_tree[u][v + 1] + costModel_.ins((*G)[v]->getLabel())));
+            if(DEBUG) {
+              ou << "db = delta_tree[";
+              if(swap) ou << v + 1 << ", " << u << "] =" << delta_tree[v + 1][u] << endl;
+              else ou << u << ", " << v + 1 << "] = " << delta_tree[u][v + 1] << endl;
+            }
+            float dc = (swap? (delta_tree[v + 1][u + 1] + costModel_.ren((*G)[v]->getLabel(), (*F)[u]->getLabel())) : (delta_tree[u + 1][v + 1] + costModel_.ren((*F)[u]->getLabel(), (*G)[v]->getLabel())));
+            if(DEBUG) {
+              ou << "db = delta_tree[";
+              if(swap) ou << v + 1 << ", " << u + 1 << "] =" << delta_tree[v + 1][u + 1] << endl;
+              else ou << u + 1 << ", " << v + 1 << "] = " << delta_tree[u + 1][v + 1] << endl;
+            }
+            float min = da >= db ? db >= dc ? dc : db : da >= dc ? dc : da;
+            if(DEBUG) {
+              ou << "da = " << da << endl;
+              ou << "db = " << db << endl;
+              ou << "dc = " << dc << endl;
+            }
+
+            if(swap) {
+              delta_tree[v][u] = min;
+              if(DEBUG) {
+                ou << "delta_tree[" << v << ", " << u << "] = " << delta_tree[v][u] << endl;
+              }
+            } else {
+              delta_tree[u][v] = min;
+              if(DEBUG) {
+                ou << "delta_tree[" << u << ", " << v << "] = " << delta_tree[u][v] << endl;
+              }
+            }
+          }
+        }
+
+        if(swap) {
+          delta_compressed_tree[b1_plus_boff_in_compressed_preL][a1_plus_aoff_in_compressed_preL] = delta_tree[alpha_j][alpha_i];
+        } else {
+          delta_compressed_tree[a1_plus_aoff_in_compressed_preL][b1_plus_boff_in_compressed_preL] = delta_tree[alpha_i][alpha_j];
+        }
+
+        if(swap) {
+          forestdist[a1][b1] = delta_tree[alpha_j][alpha_i];
+        } else {
+          forestdist[a1][b1] = delta_tree[alpha_i][alpha_j];
+        }
+
+        for(int i = beta_i + 1; i >= alpha_i; i--) {
+          if(swap) delta_tree[beta_j + 1][i] = A1[i];
+          else delta_tree[i][beta_j + 1] = A1[i];
+        }
+        for(int j = beta_j; j >= alpha_j; j--) {
+          if(swap) delta_tree[j][beta_i + 1] = A2[j];
+          else delta_tree[beta_i + 1][j] = A2[j];
+        }
       } else {// forest means have computed
-          dc = forestdist[a1_leftmost_leaf_in_compressed_postL - 1 - aoff][b1_leftmost_leaf_in_compressed_postL - 1 - boff] +
-            (swap ? delta[b1_plus_boff_in_original_preL][a1_plus_aoff_in_original_preL] : delta[a1_plus_aoff_in_original_preL][b1_plus_boff_in_original_preL]) + u;
-          /*if(DEBUG) {
-            ou << "dc = forestdist[" << to_string(a1_leftmost_leaf_in_postL - 1 - aoff) << ", " << to_string(b1_leftmost_leaf_in_postL - 1 - boff) << "](" << to_string(forestdist[a1_leftmost_leaf_in_postL - 1 - aoff][b1_leftmost_leaf_in_postL - 1 - boff]) << ")";
-            ou << " + ";
-            if(swap) ou << "delta[" << to_string(b1_plus_boff_in_preL) << ", " << to_string(a1_plus_aoff_in_preL) << "](" << to_string(delta[b1_plus_boff_in_preL][a1_plus_aoff_in_preL]) << ")";
-            else ou << "delta[" << to_string(a1_plus_aoff_in_preL) << ", " << to_string(b1_plus_boff_in_preL) << "](" << to_string(delta[a1_plus_aoff_in_preL][b1_plus_boff_in_preL]) << ")";
-            ou << " = " << to_string(dc) << endl;
-          }*/
-      }
-      forestdist[a1][b1] = da >= db ? db >= dc ? dc : db : da >= dc ? dc : da;
-      if(DEBUG) {
-        ou << "forestdist[" << a1 << ", " << b1 << "] = " << forestdist[a1][b1] << endl;
-      }
-      dist = forestdist[a1][b1];
-    }
-  }
+        float da = forestdist[a1 - 1][b1] + (swap? cF->preL_to_InsCost[a1_plus_aoff_in_compressed_preL] : cF->preL_to_DelCost[a1_plus_aoff_in_compressed_preL]);
 
-  a1 = a_in_compressed_in_postL - aoff + 1;
-  for(int i = 1; i <= aoff_original; i++, a1++) {
-    for(b1 = 1; b1 <= b_in_compressed_in_postL - boff; b1++) {
-      counter++;
-      int a1_in_original_in_preL = a_in_original[a_in_original.size() - 1 - i];
-      int b1_plus_boff_in_compressed_preL = cG->postL_to_preL[b1 + boff];
-      int b1_leftmost_leaf_in_compressed = cG->preL_to_lid[b1_plus_boff_in_compressed_preL];
-      int b1_leftmost_leaf_in_compressed_postL = cG->preL_to_postL[b1_leftmost_leaf_in_compressed];
+        float db = forestdist[a1][b1 - 1] + (swap? cG->preL_to_DelCost[b1_plus_boff_in_compressed_preL] : cG->preL_to_InsCost[b1_plus_boff_in_compressed_preL]);
 
-      int b1_plus_boff_in_original_preL = cG->compressed_to_original[b1_plus_boff_in_compressed_preL][cG->compressed_to_original[b1_plus_boff_in_compressed_preL].size() - 1]; 
-
-      if(DEBUG) {
-        ou << "Compute forestdist(" << to_string(a1_in_original_in_preL) << ", " << to_string(b1_plus_boff_in_original_preL) << ")" << endl;
-      }
-
-      float u = (swap ? costModel_.ren((*G)[b1_plus_boff_in_original_preL]->getLabel(), (*F)[a1_in_original_in_preL]->getLabel()) : costModel_.ren((*F)[a1_in_original_in_preL]->getLabel(), (*G)[b1_plus_boff_in_original_preL]->getLabel())); // USE COST MODEL - rename a1 to g1.
-      
-      da = forestdist[a1 - 1][b1] + (swap ? costModel_.ins((*F)[a1_in_original_in_preL]->getLabel()) : costModel_.del((*F)[a1_in_original_in_preL]->getLabel())); // USE COST MODEL - delete a1.
-
-      db = forestdist[a1][b1 - 1] + (swap ? cG->preL_to_DelCost[b1_plus_boff_in_compressed_preL] : cG->preL_to_InsCost[b1_plus_boff_in_compressed_preL]); // USE COST MODEL - insert b1.
-
-      
-
-      if (b_leftmost_leaf_in_compressed_in_preL == b1_leftmost_leaf_in_compressed) {// G is a tree
-        dc = forestdist[a1 - 1][b1 - 1] + u;
-        if (swap) {
-           delta[b1_plus_boff_in_original_preL][a1_in_original_in_preL] = forestdist[a1 - 1][b1 - 1];
-           if(DEBUG) {
-            ou << "delta[" << to_string(b1_plus_boff_in_original_preL) << ", " << to_string(a1_in_original_in_preL) << "] = forestdist[" << to_string(a1 - 1) << ", " << to_string(b1 - 1) << "] = " << to_string(delta[b1_plus_boff_in_original_preL][a1_in_original_in_preL]) << endl;
-           }
-         } else {
-           delta[a1_in_original_in_preL][b1_plus_boff_in_original_preL] = forestdist[a1 - 1][b1 - 1];
-           if(DEBUG) {
-            ou << "delta[" << to_string(a1_in_original_in_preL) << ", " << to_string(b1_plus_boff_in_original_preL) << "] = forestdist[" << to_string(a1 - 1) << ", " << to_string(b1 - 1) << "] = " << to_string(delta[a1_in_original_in_preL][b1_plus_boff_in_original_preL]) << endl;
-           }
-        }
-      } else {
-         dc = forestdist[0][b1_leftmost_leaf_in_compressed_postL - 1 - boff] +
-            (swap ? delta[b1_plus_boff_in_original_preL][a1_in_original_in_preL] : delta[a1_in_original_in_preL][b1_plus_boff_in_original_preL]) + u;
-      }
-      forestdist[a1][b1] = da >= db ? db >= dc ? dc : db : da >= dc ? dc : da;
-      if(DEBUG) {
-        ou << "forestdist[" << a1 << ", " << b1 << "] = " << forestdist[a1][b1] << endl;
-      }
-      dist = forestdist[a1][b1];
-    }
-  }
-
-  b1 = b_in_compressed_in_postL - boff + 1;
-  for (int j = 1; j <= boff_original; j++, b1++) {
-    for(a1 = 1; a1 <= a_in_compressed_in_postL - aoff; a1++) {
-      counter++;
-      int b1_in_original_in_preL = b_in_original[b_in_original.size() - 1 - j];
-      int a1_plus_aoff_in_compressed_preL = cF->postL_to_preL[a1 + aoff];
-      int a1_leftmost_leaf_in_compressed = cF->preL_to_lid[a1_plus_aoff_in_compressed_preL];
-      int a1_leftmost_leaf_in_compressed_postL = cF->preL_to_postL[a1_leftmost_leaf_in_compressed];
-
-      int a1_plus_boff_in_original_preL = cF->compressed_to_original[a1_plus_aoff_in_compressed_preL][cF->compressed_to_original[a1_plus_aoff_in_compressed_preL].size() - 1]; 
-
-      if(DEBUG) {
-        ou << "Compute forestdist(" << to_string(a1_plus_boff_in_original_preL) << ", " << to_string(b1_in_original_in_preL) << ")" << endl;
-      }
-
-      float u = (swap ? costModel_.ren((*G)[b1_in_original_in_preL]->getLabel(), (*F)[a1_plus_boff_in_original_preL]->getLabel()) : costModel_.ren((*F)[a1_plus_boff_in_original_preL]->getLabel(), (*G)[b1_in_original_in_preL]->getLabel())); // USE COST MODEL - rename a1 to g1.
-      
-      da = forestdist[a1 - 1][b1] + (swap ? cF->preL_to_InsCost[a1_plus_aoff_in_compressed_preL] : cF->preL_to_DelCost[a1_plus_aoff_in_compressed_preL]); // USE COST MODEL - delete a1.
-
-      db = forestdist[a1][b1 - 1] + (swap ? costModel_.del((*G)[b1_in_original_in_preL]->getLabel()) : costModel_.ins((*G)[b1_in_original_in_preL]->getLabel())); // USE COST MODEL - insert b1.
-
-      
-      if(a_leftmost_leaf_in_compressed_in_preL == a1_leftmost_leaf_in_compressed) {//is a tree means haven't computed
-        dc = forestdist[a1 - 1][b1 - 1] + u;
-        if (swap) {
-           delta[b1_in_original_in_preL][a1_plus_boff_in_original_preL] = forestdist[a1 - 1][b1 - 1];
-           if(DEBUG) {
-            ou << "delta[" << to_string(b1_in_original_in_preL) << ", " << to_string(a1_plus_boff_in_original_preL) << "] = forestdist[" << to_string(a1 - 1) << ", " << to_string(b1 - 1) << "] = " << to_string(delta[b1_in_original_in_preL][a1_plus_boff_in_original_preL]) << endl;
-           }
-         } else {
-           delta[a1_plus_boff_in_original_preL][b1_in_original_in_preL] = forestdist[a1 - 1][b1 - 1];
-           if(DEBUG) {
-            ou << "delta[" << to_string(a1_plus_boff_in_original_preL) << ", " << to_string(b1_in_original_in_preL) << "] = forestdist[" << to_string(a1 - 1) << ", " << to_string(b1 - 1) << "] = " << to_string(delta[a1_plus_boff_in_original_preL][b1_in_original_in_preL]) << endl;
-           }
-        }
-      } else {
-         dc = forestdist[a1_leftmost_leaf_in_compressed_postL - 1 - aoff][0] +
-            (swap ? delta[b1_in_original_in_preL][a1_plus_boff_in_original_preL] : delta[a1_plus_boff_in_original_preL][b1_in_original_in_preL]) + u;
-      }
-      forestdist[a1][b1] = da >= db ? db >= dc ? dc : db : da >= dc ? dc : da;
-      if(DEBUG) {
-        ou << "forestdist[" << a1 << ", " << b1 << "] = " << forestdist[a1][b1] << endl;
-      }
-      dist = forestdist[a1][b1];
-    }
-  }
-
-  a1 = a_in_compressed_in_postL - aoff + 1;
-  b1 = b_in_compressed_in_postL - boff + 1;
-  for(int i = 1; i <= aoff_original; i++, a1++) {
-    for(int j = 1; j <= boff_original; j++, b1++) {
-      counter++;
-      int a1_in_original_in_preL = a_in_original[a_in_original.size() - 1 - i];
-      int b1_in_original_in_preL = b_in_original[b_in_original.size() - 1 - j];
-
-      if(DEBUG) {
-        ou << "Compute forestdist(" << to_string(a1_in_original_in_preL) << ", " << to_string(b1_in_original_in_preL) << ")" << endl;
-      }
-
-      da = forestdist[a1 - 1][b1] + (swap? costModel_.ins((*F)[a1_in_original_in_preL]->getLabel()) : costModel_.del((*F)[a1_in_original_in_preL]->getLabel()));
-
-      db = forestdist[a1][b1 - 1] + (swap? costModel_.del((*G)[b1_in_original_in_preL]->getLabel()) : costModel_.ins((*G)[b1_in_original_in_preL]->getLabel()));
-
-      dc = forestdist[a1 - 1][b1 - 1] + (swap? costModel_.ren((*G)[b1_in_original_in_preL]->getLabel(), (*F)[a1_in_original_in_preL]->getLabel()) : costModel_.ren((*F)[a1_in_original_in_preL]->getLabel(), (*G)[b1_in_original_in_preL]->getLabel()));
-
-      if(swap) {
-        delta[b1_in_original_in_preL][a1_in_original_in_preL] = forestdist[a1 - 1][b1 - 1];
+        float dc = forestdist[a1_leftmost_leaf_in_compressed_postL - 1 - aoff][b1_leftmost_leaf_in_compressed_postL - 1 - boff] + (swap? delta_compressed_tree[b1_plus_boff_in_compressed_preL][a1_plus_aoff_in_compressed_preL] : delta_compressed_tree[a1_plus_aoff_in_compressed_preL][b1_plus_boff_in_compressed_preL]);        
+        
+        float min = da >= db ? db >= dc ? dc : db : da >= dc ? dc : da;
+        forestdist[a1][b1] = min;
         if(DEBUG) {
-          ou << "delta[" << b1_in_original_in_preL << ", " << a1_in_original_in_preL << "] = forestdist[" << to_string(a1 - 1) << ", " << to_string(b1 - 1) << "] = " << delta[b1_in_original_in_preL][a1_in_original_in_preL] << endl;
-        }
-      } else {
-        delta[a1_in_original_in_preL][b1_in_original_in_preL] = forestdist[a1 - 1][b1 - 1];
-        if(DEBUG) {
-          ou << "delta[" << a1_in_original_in_preL << ", " << b1_in_original_in_preL << "] = forestdist[" << to_string(a1 - 1) << ", " << to_string(b1 - 1) << "] = " << delta[a1_in_original_in_preL][b1_in_original_in_preL] << endl;
+          ou << "forestdist[" << a1 << ", " << b1 << "] = " << forestdist[a1][b1] << endl;
         }
       }
-
-      forestdist[a1][b1] = da >= db ? db >= dc ? dc : db : da >= dc ? dc : da;
       dist = forestdist[a1][b1];
     }
   }
-
   return dist;
 }
 
@@ -3100,45 +3078,7 @@ float TreeComparison::spfA_LR(Node* a, Node* b, int leaf, int pathType, float***
               ou << "forestdist[" << lF_in_preR << ", " << lG << ", " << rG << "] = " << forestdist[lF_in_preR][lG][rG] << endl;
             }
           }
-          /*if(mark) {
-            if(case1 == minCost) {
-              if(swap) {
-                if(DEBUG) {
-                  ou << "- -> " << (*F)[lF]->getLabel() << endl;
-                }
-                map->setMap(-1, lF);
-              } else {
-                if(DEBUG) {
-                  ou << (*F)[lF]->getLabel() << " -> " << "-" << endl;
-                }
-                map->setMap(lF, -1);
-              }
-            } else if(case2 == minCost) {
-              if(swap) {
-                if(DEBUG) {
-                  ou << (*G)[lG]->getLabel() << " -> " << "-" << endl;
-                }
-                map->setMap(lG, -1);
-              } else {
-                if(DEBUG) {
-                  ou << "- -> " << (*G)[lG]->getLabel() << endl;
-                }
-                map->setMap(-1, lG);
-              }
-            } else if(case3 == minCost) {
-              if(swap) {
-                if(DEBUG) {
-                  ou << (*G)[lG]->getLabel() << " -> " << (*F)[lF]->getLabel() << endl;
-                } 
-                map->setMap(lG, lF);
-              } else {
-                if(DEBUG) {
-                  ou << (*F)[lF]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-                } 
-                map->setMap(lF, lG);
-              }
-            }
-          }*/
+
           lG = ft[lG];
           
           //loop D
@@ -3272,45 +3212,7 @@ float TreeComparison::spfA_LR(Node* a, Node* b, int leaf, int pathType, float***
                 ou << "forestdist[" << lF_in_preR << ", " << lG << ", " << rG << "] = " << forestdist[lF_in_preR][lG][rG] << endl;
               }
             }
-            /*if(mark) {
-              if(case1 == minCost) {
-                if(swap) {
-                  if(DEBUG) {
-                    ou << "- -> " << (*F)[lF]->getLabel() << endl;
-                  }
-                  map->setMap(-1, lF);
-                } else {
-                  if(DEBUG) {
-                    ou << (*F)[lF]->getLabel() << " -> " << "-" << endl;
-                  }
-                  map->setMap(lF, -1);
-                }
-              } else if(case2 == minCost) {
-                if(swap) {
-                  if(DEBUG) {
-                    ou << (*G)[lG]->getLabel() << " -> " << "-" << endl;
-                  }
-                  map->setMap(lG, -1);
-                } else {
-                  if(DEBUG) {
-                    ou << "- -> " << (*G)[lG]->getLabel() << endl;
-                  }
-                  map->setMap(-1, lG);
-                }
-              } else if(case3 == minCost) {
-                if(swap) {
-                  if(DEBUG) {
-                    ou << (*G)[lG]->getLabel() << " -> " << (*F)[lF]->getLabel() << endl;
-                  }
-                  map->setMap(lG, lF);
-                } else {
-                  if(DEBUG) {
-                    ou << (*F)[lF]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-                  }
-                  map->setMap(lF, lG);
-                }
-              }
-            }*/
+
             dist = minCost;
             lG = ft[lG];
           }
@@ -3652,45 +3554,7 @@ float TreeComparison::spfA_LR(Node* a, Node* b, int leaf, int pathType, float***
             ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
           }
         }
-        /*if(mark) {
-          if(case1 == minCost) {
-            if(swap) {
-              if(DEBUG) {
-                ou << "- -> " << (*F)[rF_in_preL]->getLabel() << endl;
-              }
-              map->setMap(-1, rF_in_preL);
-            } else {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> " << "-" << endl;
-              }
-              map->setMap(rF_in_preL, -1);
-            }
-          } else if(case2 == minCost) {
-            if(swap) {
-              if(DEBUG) {
-                ou << (*G)[rG_in_preL]->getLabel() << " -> " << "-" << endl;
-              }
-              map->setMap(rG_in_preL, -1);
-            } else {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[rG_in_preL]->getLabel() << endl;
-              }
-              map->setMap(-1, rG_in_preL);
-            }
-          } else if(case3 == minCost) {
-            if(swap) {
-              if(DEBUG) {
-                ou << (*G)[rG_in_preL]->getLabel() << " -> " << (*F)[rF_in_preL]->getLabel() << endl;
-              }
-              map->setMap(rG_in_preL, rF_in_preL);
-            } else {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[rG_in_preL]->getLabel() << endl;
-              }
-              map->setMap(rF_in_preL, rG_in_preL);
-            }
-          }
-        }*/
+  
         dist = minCost;
         if(DEBUG) {
            ou << "Save to s[" << to_string(rF) << ", " << to_string(rG) << "] = " << to_string(s[rF][rG]) << endl;
@@ -3823,45 +3687,7 @@ float TreeComparison::spfA_LR(Node* a, Node* b, int leaf, int pathType, float***
                 ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
               }
             }
-            /*if(mark) {
-              if(case1 == minCost) {
-                if(swap) {
-                  if(DEBUG) {
-                    ou << "- -> " << (*F)[rF_in_preL]->getLabel() << endl;
-                  }
-                  map->setMap(-1, rF_in_preL);
-                } else {
-                  if(DEBUG) {
-                    ou << (*F)[rF_in_preL]->getLabel() << " -> " << "-" << endl;
-                  }
-                  map->setMap(rF_in_preL, -1);
-                }
-              } else if(case2 == minCost) {
-                if(swap) {
-                  if(DEBUG) {
-                    ou << (*G)[rG_in_preL]->getLabel() << " -> " << "-" << endl;
-                  }
-                  map->setMap(rG_in_preL, -1);
-                } else {
-                  if(DEBUG) {
-                    ou << "- -> " << (*G)[rG_in_preL]->getLabel() << endl;
-                  }
-                  map->setMap(-1, rG_in_preL);
-                }
-              } else if(case3 == minCost) {
-                if(swap) {
-                  if(DEBUG) {
-                    ou << (*G)[rG_in_preL]->getLabel() << " -> " << (*F)[rF_in_preL]->getLabel() << endl;
-                  }
-                  map->setMap(rG_in_preL, rF_in_preL);
-                } else {
-                  if(DEBUG) {
-                    ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[rG_in_preL]->getLabel() << endl;
-                  } 
-                  map->setMap(rF_in_preL, rG_in_preL);
-                }
-              }
-            }*/
+
             dist = minCost;
             rG = ft[rG];
           }
@@ -3924,489 +3750,6 @@ float TreeComparison::spfA_LR(Node* a, Node* b, int leaf, int pathType, float***
     endPathNode_in_preR = F->preL_to_preR[endPathNode];
   }
 
-  /*if(mark) {
-    int lF = 0;
-    int rF = 0;
-    int lG = 0;
-    int rG = 0;
-    int direction = 0;//0 for right 1 for left;
-    int leaf = FreeStrategies[0][0].getLeaf();
-    Node* parent = (*F)[leaf]->getParent();
-    int* favouriteChild = new int[F->getTreeSize()];
-    int count = 0;
-    while(parent != NULL) {
-      favouriteChild[count++] = leaf;
-      leaf = parent->getID();
-      parent = (*F)[leaf]->getParent();
-    }
-
-    if(DEBUG) {
-      ou << "favouriteChild: " << endl;
-      for(int i = count - 1; i >= 0; i--) {
-        ou << favouriteChild[i] << " ";
-      }
-      ou << endl;
-    }
-
-
-    int i = count - 1;
-    int prev_fav_child = 0;
-    while(lF <= F->getTreeSize() && rF <= F->getTreeSize() && lG <= G->getTreeSize() && rG <= G->getTreeSize() ) {
-      if(DEBUG) {
-        ou << "(" << lF << ", " << rF << ", " << lG << ", " << rG << ")" << endl;
-      }
-      int rF_in_preL = F->preR_to_preL[rF];
-      int rG_in_preL = G->preR_to_preL[rG];
-      int lF_in_preR = F->preL_to_preR[lF];
-      int favouriteChild_in_preR = F->preL_to_preR[favouriteChild[i]];
-
-      float da = 0;
-      float db = 0;
-      float dc = 0;
-
-      bool isFTree = rF_in_preL == lF;
-      bool isGTree = rG_in_preL == lG;
-
-      if(rF == favouriteChild_in_preR) {
-        direction = 1;
-      }
-      else if(lF == favouriteChild[i]) {
-        i--;
-        direction = 0;
-      }
-      
-      if(isGTree && isFTree) {
-        da = forestdist[rF + 1][lG][rG] + (swap? costModel_.ins((*F)[rF_in_preL]->getLabel()) : costModel_.del((*F)[rF_in_preL]->getLabel()));
-        db = forestdist[rF][lG + 1][rG + 1] + (swap? costModel_.del((*G)[lG]->getLabel()) : costModel_.ins((*G)[lG]->getLabel()));
-        dc = forestdist[rF + 1][lG + 1][rG + 1] + (swap? costModel_.ren((*G)[lG]->getLabel(), (*F)[rF_in_preL]->getLabel()) : costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[lG]->getLabel()));
-        if(DEBUG) {
-          ou << "isGTree && isFTree" << endl;
-          ou << "da = " << da << endl;
-          ou << "db = " << db << endl;
-          ou << "dc = " << dc << endl; 
-          ou << "forestdist[" << rF << ", " << lG + 1 << ", " << rG + 1 << "] = " << forestdist[rF][lG + 1][rG + 1] << endl;
-          ou << "forestdist[" << rF + 1 << ", " << lG + 1 << ", " << rG + 1 << "] = " << forestdist[rF + 1][lG + 1][rG + 1] << endl;
-          ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
-        }
-
-        if(forestdist[rF][lG][rG] == da) {
-          if(swap) {
-            if(DEBUG) {
-              ou << "- -> " << (*F)[rF_in_preL]->getLabel() << endl;
-            }
-            map->setMap(-1, rF_in_preL);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[rF_in_preL]->getLabel() << " -> -" << endl;
-            }
-            map->setMap(rF_in_preL, -1);
-          }
-          rF++;
-          lF++;
-        }
-
-        else if(forestdist[rF][lG][rG] == db) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[lG]->getLabel() << " -> -" << endl;
-            }
-            map->setMap(lG, -1);
-          } else {
-            if(DEBUG) {
-              ou << "- -> " << (*G)[lG]->getLabel() << endl;
-            }
-            map->setMap(-1, lG);
-          }
-          lG++;
-          rG++;
-        }
-
-        else if(forestdist[rF][lG][rG] == dc) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[lG]->getLabel() << " -> " << (*F)[rF_in_preL]->getLabel() << endl;
-            }
-            map->setMap(lG, rF_in_preL);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-            }
-            map->setMap(rF_in_preL, lG);
-          }
-          lG++;
-          rG++;
-          lF++;
-          rF++;
-        }
-
-      } else if(isFTree && direction == 0) {
-        da = forestdist[rF + 1][lG][rG] + (swap? costModel_.ins((*F)[rF_in_preL]->getLabel()) : costModel_.del((*F)[rF_in_preL]->getLabel()));
-        db = forestdist[rF][lG][rG + 1] + (swap? costModel_.del((*G)[rG_in_preL]->getLabel()) : costModel_.ins((*G)[rG_in_preL]->getLabel()));
-        int size_of_rG = (*G)[rG_in_preL]->getSubTreeSize();
-        dc = forestdist[rF + 1][lG][rG + size_of_rG] + delta[rF_in_preL][rG_in_preL] +(swap? costModel_.ren((*G)[rG_in_preL]->getLabel(), (*F)[rF_in_preL]->getLabel()) : costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[rG_in_preL]->getLabel()));
-
-        if(DEBUG) {
-          ou << "isFTree && direction == 0" << endl;
-          ou << "da = " << da << endl;
-          ou << "db = " << db << endl;
-          ou << "dc = " << dc << endl; 
-          ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
-        }
-        if(forestdist[rF][lG][rG] == da) {
-          if(swap) {
-            if(DEBUG) {
-              ou << "- -> " << (*F)[rF_in_preL]->getLabel() << endl;
-            }
-            map->setMap(-1, rF_in_preL);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[rF_in_preL]->getLabel() << " -> -" << endl;
-            }
-            map->setMap(rF_in_preL, -1);
-          }
-          lF++;
-          rF++;
-        }
-
-        else if(forestdist[rF][lG][rG] == db) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[rG_in_preL]->getLabel() << " -> -" << endl;
-            }
-            map->setMap(rG_in_preL, -1);
-          } else {
-            if(DEBUG) {
-              ou << "- -> " << (*G)[rG_in_preL] << endl; 
-            }
-            map->setMap(-1, rG_in_preL);
-          }
-          rG++;
-        }
-
-        else if(forestdist[rF][lG][rG] == dc) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[rG_in_preL]->getLabel() << " -> " << (*F)[rF_in_preL]->getLabel() << endl;
-            }
-            map->setMap(rG_in_preL, rF_in_preL);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[rG_in_preL]->getLabel() << endl;
-            }
-            map->setMap(rF_in_preL, rG_in_preL);
-          }
-          lF++;
-          rF++;
-          rG = rG + size_of_rG;
-        }
-      } else if(isFTree && direction == 1) {
-        da = forestdist[rF + 1][lG][rG] + (swap? costModel_.ins((*F)[rF_in_preL]->getLabel()) : costModel_.del((*F)[rF_in_preL]->getLabel()));
-        db = forestdist[rF][lG + 1][rG] + (swap? costModel_.del((*G)[lG]->getLabel()) : costModel_.ins((*G)[lG]->getLabel()));
-        int size_of_lG = (*G)[lG]->getSubTreeSize();
-        dc = forestdist[rF + 1][lG + size_of_lG][rG] + delta[rF_in_preL][lG] + (swap? costModel_.ren((*G)[lG]->getLabel(), (*F)[rF_in_preL]->getLabel()) : costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[lG]->getLabel()));
-
-        if(DEBUG) {
-          ou << "isFTree && direction == 1" << endl;
-          ou << "da = " << da << endl;
-          ou << "db = " << db << endl;
-          ou << "dc = " << dc << endl; 
-          ou << "forestdist[" << lF_in_preR << ", " << lG << ", " << rG << "] = " << forestdist[lF_in_preR][lG][rG] << endl;
-        }
-
-        if(forestdist[lF_in_preR][lG][rG] == da) {
-          if(swap) {
-            if(DEBUG) {
-              ou << "- -> " << (*F)[rF_in_preL]->getLabel() << endl;
-            }
-            map->setMap(-1, rF_in_preL);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[rF_in_preL]->getLabel() << " -> -" << endl;
-            }
-            map->setMap(rF_in_preL, -1);
-          }
-          lF++;
-          rF++;
-        }
-
-        else if(forestdist[lF_in_preR][lG][rG] == db) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[lG]->getLabel() << " -> -" << endl;
-            }
-            map->setMap(lG, -1);
-          } else {
-            if(DEBUG) {
-              ou << "- -> " << (*G)[lG]->getLabel() << endl;
-            }
-            map->setMap(-1, lG);
-          }
-          lG++;
-        }
-
-        else if(forestdist[lF_in_preR][lG][rG] == dc) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[lG]->getLabel() << " -> " << (*F)[rF_in_preL]->getLabel() << endl;
-            }
-            map->setMap(lG, rF_in_preL);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-            }
-            map->setMap(rF_in_preL, lG);
-          }
-          lF++;
-          rF++;
-          lG = lG + size_of_lG;
-        }
-      } else if(isGTree && direction == 0) {
-        da = forestdist[rF + 1][lG][rG] + (swap? costModel_.ins((*F)[rF_in_preL]->getLabel()) : costModel_.del((*F)[rF_in_preL]->getLabel()));
-        db = forestdist[rF][lG + 1][rG + 1] + (swap? costModel_.del((*G)[lG]->getLabel()) : costModel_.ins((*G)[lG]->getLabel()));
-        int size_of_rF = (*F)[rF_in_preL]->getSubTreeSize();
-        dc = forestdist[rF + size_of_rF][lG + 1][rG + 1] + delta[rF_in_preL][lG] + (swap? costModel_.ren((*G)[lG]->getLabel(), (*F)[rF_in_preL]->getLabel()) : costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[lG]->getLabel()));
-
-        if(DEBUG) {
-          ou << "isGTree && direction == 0" << endl;
-          ou << "da = " << da << endl;
-          ou << "db = " << db << endl;
-          ou << "dc = " << dc << endl; 
-          ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
-        }
-
-        if(forestdist[rF][lG][rG] == da) {
-          if(swap) {
-            if(DEBUG) {
-              ou << "- -> " << (*F)[rF_in_preL]->getLabel() << endl;
-            }
-            map->setMap(-1, rF_in_preL);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[rF_in_preL]->getLabel() << " -> -" << endl;
-            }
-            map->setMap(rF_in_preL, -1);
-          }
-          rF++;
-        }
-        else if(forestdist[rF][lG][rG] == db) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[lG]->getLabel() << " -> -" << endl;
-            }
-            map->setMap(lG, -1);
-          } else {
-            if(DEBUG) {
-              ou << "- -> " << (*G)[lG]->getLabel() << endl;
-            }
-            map->setMap(-1, lG);
-          }
-          lG++;
-          rG++;
-        }
-        else if(forestdist[rF][lG][rG] == dc) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[lG]->getLabel() << " -> " << (*F)[rF_in_preL]->getLabel() << endl;
-            }
-            map->setMap(lG, rF_in_preL);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-            }
-            map->setMap(rF_in_preL, lG);
-          }
-          rF = rF + size_of_rF;
-          lG++;
-          rG++;
-        }
-      } else if(isGTree && direction == 1) {
-        da = forestdist[lF_in_preR - 1][lG][rG] + (swap? costModel_.ins((*F)[lF]->getLabel()) : costModel_.del((*F)[lF]->getLabel()));
-        db = forestdist[rF][lG + 1][rG + 1] + (swap? costModel_.del((*G)[lG]->getLabel()) : costModel_.ins((*G)[lG]->getLabel()));
-        int size_of_lF = (*F)[lF]->getSubTreeSize();
-        dc = forestdist[lF_in_preR - size_of_lF][lG + 1][rG + 1] + delta[lF][lG] + (swap? costModel_.ren((*G)[lG]->getLabel(), (*F)[lF]->getLabel()) : costModel_.ren((*F)[lF]->getLabel(), (*G)[lG]->getLabel()));
-
-        if(DEBUG) {
-          ou << "isGTree && direction == 1" << endl;
-          ou << "da = " << da << endl;
-          ou << "db = " << db << endl;
-          ou << "dc = " << dc << endl; 
-          ou << "forestdist[" << lF_in_preR << ", " << lG << ", " << rG << "] = " << forestdist[lF_in_preR][lG][rG] << endl;
-        }
-
-        if(forestdist[lF_in_preR][lG][rG] == da) {
-          if(swap) {
-            if(DEBUG) {
-              ou << "- -> " << (*F)[lF]->getLabel() << endl; 
-            }
-            map->setMap(-1, lF);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[lF]->getLabel() << " -> -" << endl; 
-            }
-            map->setMap(lF, -1);
-          }
-          lF++;
-        }
-
-        else if(forestdist[lF_in_preR][lG][rG] == db) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[lG]->getLabel() << " -> -" << endl;
-            }
-            map->setMap(lG, -1);
-          } else {
-            if(DEBUG) {
-              ou << "- -> " << (*G)[lG]->getLabel() << endl;
-            }
-            map->setMap(-1, lG);
-          }
-          lG++;
-          rG++;
-        }
-
-        else if(forestdist[lF_in_preR][lG][rG] == dc) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[lG]->getLabel() << " -> " << (*F)[lF]->getLabel() << endl;
-            }
-            map->setMap(lG, lF);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[lF]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-            }
-            map->setMap(lF, lG);
-          }
-          lF = lF + size_of_lF;
-          lG++;
-          rG++;
-        }
-      }
-      //F and G are forest and direction = right
-      else if(direction == 0) {
-        da = forestdist[rF + 1][lG][rG] + (swap? costModel_.ins((*F)[rF_in_preL]->getLabel()) : costModel_.del((*F)[rF_in_preL]->getLabel()));
-        db = forestdist[rF][lG][rG + 1] + (swap? costModel_.del((*G)[rG_in_preL]->getLabel()) : costModel_.ins((*G)[rG_in_preL]->getLabel()));
-        int size_of_rF = (*F)[rF_in_preL]->getSubTreeSize();
-        int size_of_rG = (*G)[rG_in_preL]->getSubTreeSize();
-        dc = forestdist[rF + size_of_rF][lG][rG + size_of_rG] + delta[rF_in_preL][rG_in_preL] + (swap? costModel_.ren((*G)[rG_in_preL]->getLabel(), (*F)[rF_in_preL]->getLabel()) : costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[rG_in_preL]->getLabel()));
-
-        if(DEBUG) {
-          ou << "Both forest && direction == 0" << endl;
-          ou << "da = " << da << endl;
-          ou << "db = " << db << endl;
-          ou << "dc = " << dc << endl; 
-          ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
-        }
-
-        if(forestdist[rF][lG][rG] == da) {
-          if(swap) {
-            if(DEBUG) {
-              ou << "- -> " << (*F)[rF_in_preL]->getLabel() << endl;
-            }
-            map->setMap(-1, rF_in_preL);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[rF_in_preL]->getLabel() << " -> -" << endl;
-            }
-            map->setMap(rF_in_preL, -1);
-          }
-          rF++;
-        }
-
-        else if(forestdist[rF][lG][rG] == db) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[rG_in_preL]->getLabel() << " -> -" << endl;
-            }
-            map->setMap(rG_in_preL, -1);
-          } else {
-            if(DEBUG) {
-              ou << "- -> " << (*G)[rG_in_preL] << endl;
-            }
-            map->setMap(-1, rG_in_preL);
-          }
-          rG++;
-        }
-
-        else if(forestdist[rF][lG][rG] == dc) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[rG_in_preL]->getLabel() << " -> " << (*F)[rF_in_preL]->getLabel() << endl;
-            }
-            map->setMap(rG_in_preL, rF_in_preL);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[rG_in_preL]->getLabel() << endl;
-            }
-            map->setMap(rF_in_preL, rG_in_preL);
-          }
-          rF = rF + size_of_rF;
-          rG = rG + size_of_rG;
-        }
-      }
-      //F and G are forest and direction = left
-      else if(direction == 1) {
-        da = forestdist[lF_in_preR - 1][lG][rG] + (swap? costModel_.ins((*F)[lF]->getLabel()) : costModel_.del((*F)[lF]->getLabel()));
-        db = forestdist[lF_in_preR][lG + 1][rG] + (swap? costModel_.del((*G)[lG]->getLabel()) : costModel_.ins((*G)[lG]->getLabel()));
-        int size_of_lF = (*F)[lF]->getSubTreeSize();
-        int size_of_lG = (*G)[lG]->getSubTreeSize();
-        dc = forestdist[lF_in_preR - size_of_lF][lG + size_of_lG][rG] + delta[lF][lG] + (swap? costModel_.ren((*G)[lG]->getLabel(), (*F)[lF]->getLabel()) : costModel_.ren((*F)[lF]->getLabel(), (*G)[lG]->getLabel()));
-
-        if(DEBUG) {
-          ou << "Both forest && direction == 1" << endl;
-          ou << "da = " << da << endl;
-          ou << "db = " << db << endl;
-          ou << "dc = " << dc << endl; 
-          ou << "forestdist[" << lF_in_preR << ", " << lG << ", " << rG << "] = " << forestdist[lF_in_preR][lG][rG] << endl;
-        }
-
-        if(forestdist[lF_in_preR][lG][rG] == da) {
-          if(swap) {
-            if(DEBUG) {
-              ou << "- -> " << (*F)[lF]->getLabel() << endl;
-            }
-            map->setMap(-1, lF);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[lF]->getLabel() << " -> -" << endl;
-            }
-            map->setMap(lF, -1);
-          }
-          lF++;
-        }
-
-        else if(forestdist[lF_in_preR][lG][rG] == db) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[lG]->getLabel() << " -> -" << endl;
-            }
-            map->setMap(lG, -1);
-          } else {
-            if(DEBUG) {
-              ou << "- -> " << (*G)[lG]->getLabel() << endl;
-            }
-            map->setMap(-1, lG);
-          }
-          lG++;
-        }
-
-        else if(forestdist[lF_in_preR][lG][rG] == dc) {
-          if(swap) {
-            if(DEBUG) {
-              ou << (*G)[lG]->getLabel() << " -> " << (*F)[lF]->getLabel() << endl;
-            }
-            map->setMap(lG, lF);
-          } else {
-            if(DEBUG) {
-              ou << (*F)[lF]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-            }
-            map->setMap(lF, lG);
-          }
-          lF = lF + size_of_lF;
-          lG = lG + size_of_lG; 
-        }
-      }
-    }
-  }*/
   return dist;
 };
 
@@ -5736,8 +5079,8 @@ float TreeComparison::getTreeDistance_LL(void) {
 };
 
 float TreeComparison::getTreeDistance_LL_compressed(void) {
-  vector<Node*> preA = A_->getPreL();
-  vector<Node*> preB = B_->getPreL();
+  vector<Node*> preA = cA_->getPreL();
+  vector<Node*> preB = cB_->getPreL();
   counter = 0;
   map->init();
   for(int i = 0; i < treeSizeA; i++) {
@@ -5747,10 +5090,19 @@ float TreeComparison::getTreeDistance_LL_compressed(void) {
   }
   treeDist = spfLL_compressed(preA[0], preB[0], A_->preL_to_lid[preA[0]->getID()], false);
   if(DEBUG) {
-    ou << "delta Result LL" << endl;
-    for(int i = 0; i < treeSizeA; i++) {
-      for(int j = 0; j < treeSizeB; j++) {
-        ou << delta[i][j] << " ";
+    ou << "delta Result LL_compressed" << endl;
+    ou << "delta_tree" << endl;
+    for(int i = 0; i <= treeSizeA; i++) {
+      for(int j = 0; j <= treeSizeB; j++) {
+        ou << delta_tree[i][j] << " ";
+      }
+      ou << endl;
+    }
+    ou << endl;
+    ou << "delta_compressed_tree" << endl;
+    for(int i = 0; i <= compressedTreeSizeA; i++) {
+      for(int j = 0; j <= compressedTreeSizeB; j++) {
+        ou << delta_compressed_tree[i][j] << " ";
       }
       ou << endl;
     }
@@ -6506,2377 +5858,6 @@ void TreeComparison::gteo_LL(Node* a, Node* b) {
     GcurrentForestSize--;
   }
 }
-
-
-
-
-
-/*void TreeComparison::gteo(Node* a, Node* b) {
-  int pathLeaf = FreeStrategies[a->getID()][b->getID()].getLeaf();
-  int direction = FreeStrategies[a->getID()][b->getID()].getDirection();
-  int treeToDecompose = FreeStrategies[a->getID()][b->getID()].getTreeToDecompose();
-  Tree *F, *G;
-
-  int pathType;// 0 left 1 right 2 special
-  if(DEBUG) {
-    ou << "gteo(" << a->getID() << ", " << b->getID() << ")" << endl;
-    ou << "treeToDecompose = " << treeToDecompose << " pathLeaf = " << pathLeaf << endl;
-  }
-
-  if(a->getSubTreeSize() == 1 || b->getSubTreeSize() == 1) {
-    F = A_;
-    G = B_;
-    ou << "spf1" << endl;
-    float min = FLT_MAX;
-    int from = 0;
-    int to = 0;
-    if(a->getSubTreeSize() == 1) {
-      int a_in_preL = a->getID();
-      for(int i = 0; i < b->getSubTreeSize(); i++) {
-        float cost = costModel_.ren((*F)[a_in_preL]->getLabel(), (*G)[i]->getLabel()) - costModel_.del((*F)[a_in_preL]->getLabel());
-        if(cost < min) {
-          from = a_in_preL;
-          to = i;
-          min = cost;
-        }
-      }
-    } else if(b->getSubTreeSize() == 1) {
-      int b_in_preL = b->getID();
-      for(int i = 0; i < a->getSubTreeSize(); i++) {
-        float cost = costModel_.ren((*F)[i]->getLabel(), (*G)[b->getID()]->getLabel()) - costModel_.ins((*G)[b_in_preL]->getLabel());
-        if(cost < min) {
-          from = i;
-          to = b_in_preL;
-          min = cost;
-        }
-      }
-    }
-    map->setMap(from, to);
-    return;
-  }
-
-  if(treeToDecompose == 0) {
-    F = A_;
-    G = B_;
-    pathType = getPathType(A_, a, pathLeaf);
-    if(DEBUG) {
-      ou << "pathType = " << pathType << endl;
-    }
-
-    if(pathType == 0) {
-      float** forestdist;
-      forestdist = new float*[a->getSubTreeSize() + 1];
-      for(int i = 0; i < a->getSubTreeSize() + 1; i++) {
-        forestdist[i] = new float[b->getSubTreeSize() + 1];
-      }
-      treeEditDist(a, b, forestdist, false, true);
-
-
-
-      int a_leftmost_leaf_in_preL = F->preL_to_lid[a->getID()];
-      int b_leftmost_leaf_in_preL = G->preL_to_lid[b->getID()];
-
-      int a_leftmost_leaf_in_postL = F->preL_to_postL[a_leftmost_leaf_in_preL];
-      int b_leftmost_leaf_in_postL = G->preL_to_postL[b_leftmost_leaf_in_preL];
-
-      int aoff = a_leftmost_leaf_in_postL - 1;//consider gap
-      int boff = b_leftmost_leaf_in_postL - 1;//consider gap
-
-      if(DEBUG) {
-        ou << "forestdist" << endl;
-        for(int i = 0; i < a->getSubTreeSize() + 1; i++) {
-          for(int j = 0; j < b->getSubTreeSize() + 1; j++) {
-            ou << forestdist[i][j] << " ";
-          }
-          ou << endl;
-        } 
-      }
-
-      int i = F->preL_to_postL[a->getID()] - aoff;
-      int j = G->preL_to_postL[b->getID()] - boff;
-
-      int FcurrentForestSize = a->getSubTreeSize();
-      int GcurrentForestSize = b->getSubTreeSize();
-
-      if(a->getID() != 0 && b->getID() != 0) {
-        i--;
-        j--;
-        FcurrentForestSize--;
-        GcurrentForestSize--;
-      }
-
-      while(FcurrentForestSize > 0 && GcurrentForestSize > 0) {
-
-        int i_minus1_in_preL = F->postL_to_preL[i + aoff];
-        int j_minus1_in_preL = G->postL_to_preL[j + boff];
-        bool isFTree = F->preL_to_lid[i_minus1_in_preL] == F->preL_to_lid[a->getID()];
-        bool isGTree = G->preL_to_lid[j_minus1_in_preL] == G->preL_to_lid[b->getID()];
-        float da = forestdist[i - 1][j] + costModel_.del((*F)[i_minus1_in_preL]->getLabel());
-        float db = forestdist[i][j - 1] + costModel_.ins((*G)[j_minus1_in_preL]->getLabel());
-        int size_of_i_minus1_in_preL = (*F)[i_minus1_in_preL]->getSubTreeSize();
-        int size_of_j_minus1_in_preL = (*G)[j_minus1_in_preL]->getSubTreeSize();
-        float dc = forestdist[i - size_of_i_minus1_in_preL][j - size_of_j_minus1_in_preL] + delta[i_minus1_in_preL][j_minus1_in_preL] + costModel_.ren((*F)[i_minus1_in_preL]->getLabel(), (*G)[j_minus1_in_preL]->getLabel());
-       
-        if(DEBUG) {
-          ou << "i = " << i_minus1_in_preL << " j = " << j_minus1_in_preL << endl;
-        }
-
-        if(DEBUG) {
-          ou << "da = " << da << " db = " << db << " dc = " << dc << endl;
-          ou << "forestdist[" << i - 1 << ", " << j << "] = " << forestdist[i - 1][j] << endl;
-          ou << "forestdist[" << i << ", " << j - 1 << "] = " << forestdist[i][j - 1] << endl;
-          ou << "forestdist[" << i - size_of_i_minus1_in_preL << ", " << j - size_of_j_minus1_in_preL << "] = " << forestdist[i - size_of_i_minus1_in_preL][j - size_of_j_minus1_in_preL] << endl;
-          ou << "forestdist[" << i << ", " << j << "] = " << forestdist[i][j] << endl;    
-        }
-        if(da == forestdist[i][j]) {
-          if(DEBUG) {
-            ou << (*F)[i_minus1_in_preL]->getLabel() << "(" << i_minus1_in_preL << ")" << " -> -" << endl;
-          }
-          map->setMap(i_minus1_in_preL, -1);
-          i = i - 1;
-          FcurrentForestSize--;
-        } else if(db == forestdist[i][j]) {
-          if(DEBUG) {
-            ou << "- -> " << (*G)[j_minus1_in_preL] << "(" << j_minus1_in_preL << ")" << endl;
-          }
-          map->setMap(-1, j_minus1_in_preL);
-          j = j - 1;
-          GcurrentForestSize--;
-        } else if(dc == forestdist[i][j]) {
-          if(DEBUG) {
-            ou << (*F)[i_minus1_in_preL]->getLabel() << "(" << i_minus1_in_preL << ") -> " << (*G)[j_minus1_in_preL]->getLabel() << "(" << j_minus1_in_preL << ")" << endl;
-          }
-          map->setMap(i_minus1_in_preL, j_minus1_in_preL);
-          if(isFTree && isGTree) {
-            i = i - 1;
-            j = j - 1;
-            FcurrentForestSize--;
-            GcurrentForestSize--;
-          } else {
-            if((*F)[i_minus1_in_preL]->getSubTreeSize() > 1 && (*G)[j_minus1_in_preL]->getSubTreeSize() > 1) {
-              gteo((*F)[i_minus1_in_preL], (*G)[j_minus1_in_preL]);
-            }
-            i = i - size_of_i_minus1_in_preL;
-            j = j - size_of_j_minus1_in_preL;
-            FcurrentForestSize -= size_of_i_minus1_in_preL;
-            GcurrentForestSize -= size_of_j_minus1_in_preL;
-          }
-        }
-      }
-      while(FcurrentForestSize > 0) {
-        if(DEBUG) {
-          ou << "i = " << i << " j = 0" << endl;
-        } 
-        int i_minus1_in_preL = F->postL_to_preL[i - 1];
-        map->setMap(i_minus1_in_preL, -1);
-        i = i - 1;
-        FcurrentForestSize--;
-      }
-      while(GcurrentForestSize > 0) {
-        if(DEBUG) {
-          ou << "i = 0 j = " << j << endl;
-        }
-        int j_minus1_in_preL = G->postL_to_preL[j - 1];
-        map->setMap(-1, j_minus1_in_preL);
-        j = j - 1;
-        GcurrentForestSize--;
-      }
-    }
-    else if(pathType == 1) {
-      float** forestdist;
-
-      forestdist = new float*[a->getSubTreeSize() + 1];
-      for(int i = 0; i < a->getSubTreeSize() + 1; i++) {
-        forestdist[i] = new float[b->getSubTreeSize() + 1];
-      }
-      revTreeEditDist(a, b, forestdist, false, true);
-
-      int a_rightmost_leaf_in_preL = F->preL_to_rid[a->getID()];
-      int b_rightmost_leaf_in_preL = G->preL_to_rid[b->getID()];
-
-      int a_rightmost_leaf_in_postR = F->preL_to_postR[a_rightmost_leaf_in_preL];
-      int b_rightmost_leaf_in_postR = G->preL_to_postR[b_rightmost_leaf_in_preL];
-
-      int aoff = a_rightmost_leaf_in_postR - 1;//consider gap
-      int boff = b_rightmost_leaf_in_postR - 1;//consider gap
-
-      int FcurrentForestSize = a->getSubTreeSize();
-      int GcurrentForestSize = b->getSubTreeSize();
-
-      if(DEBUG) {
-        ou << "forestdist" << endl;
-        for(int i = 0; i < a->getSubTreeSize() + 1; i++) {
-          for(int j = 0; j < b->getSubTreeSize() + 1; j++) {
-            ou << forestdist[i][j] << " ";
-          }
-          ou << endl;
-        } 
-      }
-
-
-      int i = F->preL_to_postR[a->getID()] - aoff;
-      int j = G->preL_to_postR[b->getID()] - boff;
-
-      if(a->getID() != 0 && b->getID() != 0) {
-        i--;
-        j--;
-        FcurrentForestSize--;
-        GcurrentForestSize--;
-      }
-
-      while(FcurrentForestSize > 0 && GcurrentForestSize > 0) {
-
-        int i_minus1_in_preL = F->postR_to_preL[i + aoff];
-        int j_minus1_in_preL = G->postR_to_preL[j + boff];
-        bool isFTree = F->preL_to_rid[i_minus1_in_preL] == F->preL_to_rid[a->getID()];
-        bool isGTree = G->preL_to_rid[j_minus1_in_preL] == G->preL_to_rid[b->getID()];
-        float da = forestdist[i - 1][j] + costModel_.del((*F)[i_minus1_in_preL]->getLabel());
-        float db = forestdist[i][j - 1] + costModel_.ins((*G)[j_minus1_in_preL]->getLabel());
-        int size_of_i_minus1_in_preL = (*F)[i_minus1_in_preL]->getSubTreeSize();
-        int size_of_j_minus1_in_preL = (*G)[j_minus1_in_preL]->getSubTreeSize();
-        float dc = forestdist[i - size_of_i_minus1_in_preL][j - size_of_j_minus1_in_preL] + delta[i_minus1_in_preL][j_minus1_in_preL] + costModel_.ren((*F)[i_minus1_in_preL]->getLabel(), (*G)[j_minus1_in_preL]->getLabel());
-   
-
-        if(DEBUG) {
-          ou << "i = " << i_minus1_in_preL << " j = " << j_minus1_in_preL << endl;
-        }
-
-        if(DEBUG) {
-          ou << "da = " << da << " db = " << db << " dc = " << dc << endl;
-          ou << "forestdist[" << i - 1 << ", " << j << "] = " << forestdist[i - 1][j] << endl;
-          ou << "forestdist[" << i << ", " << j - 1 << "] = " << forestdist[i][j - 1] << endl;
-          ou << "forestdist[" << i - size_of_i_minus1_in_preL << ", " << j - size_of_j_minus1_in_preL << "] = " << forestdist[i - size_of_i_minus1_in_preL][j - size_of_j_minus1_in_preL] << endl;
-          ou << "forestdist[" << i << ", " << j << "] = " << forestdist[i][j] << endl;          
-        }
-        if(da == forestdist[i][j]) {
-          if(DEBUG) {
-            ou << (*F)[i_minus1_in_preL]->getLabel() << "(" << i_minus1_in_preL << ")" << " -> -" << endl;
-          }
-          map->setMap(i_minus1_in_preL, -1);
-          i = i - 1;
-          FcurrentForestSize--;
-        } else if(db == forestdist[i][j]) {
-          if(DEBUG) {
-            ou << "- -> " << (*G)[j_minus1_in_preL] << "(" << j_minus1_in_preL << ")" << endl;
-          }
-          map->setMap(-1, j_minus1_in_preL);
-          j = j - 1;
-          GcurrentForestSize--;
-        } else if(dc == forestdist[i][j]) {
-          if(DEBUG) {
-            ou << (*F)[i_minus1_in_preL]->getLabel() << "(" << i_minus1_in_preL << ") -> " << (*G)[j_minus1_in_preL]->getLabel() << "(" << j_minus1_in_preL << ")" << endl;
-          }
-          map->setMap(i_minus1_in_preL, j_minus1_in_preL);
-          if(isFTree && isGTree) {
-            i = i - 1;
-            j = j - 1;
-            FcurrentForestSize--;
-            GcurrentForestSize--;
-          }
-          else {
-            i = i - size_of_i_minus1_in_preL;
-            j = j - size_of_j_minus1_in_preL;
-            FcurrentForestSize -= size_of_i_minus1_in_preL;
-            GcurrentForestSize -= size_of_j_minus1_in_preL;
-            if((*F)[i_minus1_in_preL]->getSubTreeSize() > 1 && (*G)[j_minus1_in_preL]->getSubTreeSize() > 1) {
-              gteo((*F)[i_minus1_in_preL], (*G)[j_minus1_in_preL]);
-            }
-          }
-        }
-      }
-      while(FcurrentForestSize > 0) {
-        if(DEBUG) {
-          ou << "i = " << i << " j = 0" << endl;
-        } 
-        int i_minus1_in_preL = F->postR_to_preL[i - 1];
-        map->setMap(i_minus1_in_preL, -1);
-        i = i - 1;
-      }
-      while(GcurrentForestSize > 0) {
-        if(DEBUG) {
-          ou << "i = 0 j = " << j << endl;
-        }
-        int j_minus1_in_preL = G->postR_to_preL[j - 1];
-        map->setMap(-1, j_minus1_in_preL);
-        j = j - 1;
-      }
-    }
-
-    else if(pathType == 2) {
-      if(direction == 1) {
-        float*** forestdist;
-        forestdist = new float**[treeSizeA+ 1];
-        for(int i = 0; i < treeSizeA + 1; i++) {
-          forestdist[i] = new float*[treeSizeB + 1];
-          for(int j = 0; j < treeSizeB + 1; j++) {
-            forestdist[i][j] = new float[treeSizeB + 1];
-          }
-        }
-        spfA_RL(a, b, pathLeaf, pathType, forestdist, false, true);
-
-        int lF = a->getID();
-        int rF = F->preL_to_preR[lF];
-        int FcurrentForestSize = a->getSubTreeSize();
-        
-        int lG = b->getID();
-        int rG = G->preL_to_preR[lG];
-        int GcurrentForestSize = b->getSubTreeSize();
-
-
-        int direction = 1;//0 for right 1 for left;
-        int leaf = FreeStrategies[a->getID()][b->getID()].getLeaf();
-        Node* parent = (*F)[leaf]->getParent();
-        int* favouriteChild = new int[F->getTreeSize()];
-        int count = 0;
-
-        while(leaf != a->getID()) {
-          favouriteChild[count++] = leaf;
-          leaf = parent->getID();
-          parent = (*F)[leaf]->getParent();
-        }
-        favouriteChild[count++] = leaf;
-        int i = count - 1;
-        if(!(a->getID() == 0 && b->getID() == 0)) {
-          lF++;
-          rF++;
-          lG++;
-          rG++;
-          FcurrentForestSize--;
-          GcurrentForestSize--;
-          i--;
-        }
-        int prev_fav_child = favouriteChild[count - 1];
-        int prev_fav_child_in_preR = F->preL_to_preR[prev_fav_child];
-
-        if(DEBUG) {
-          ou << "favouriteChild: " << endl;
-          for(int i = count - 1; i >= 0; i--) {
-            ou << favouriteChild[i] << " ";
-          }
-          ou << endl;
-        }
-
-        while(FcurrentForestSize > 0 && GcurrentForestSize > 0) {
-          if(DEBUG) {
-            ou << "(" << lF << ", " << rF << ", " << lG << ", " << rG << ")" << endl;
-            ou << "FcurrentForestSize = " << FcurrentForestSize << endl;
-            ou << "GcurrentForestSize = " << GcurrentForestSize << endl;
-          }
-
-          int rF_in_preL = F->preR_to_preL[rF];
-          int rG_in_preL = G->preR_to_preL[rG];
-          int lF_in_preR = F->preL_to_preR[lF];
-
-          float da = 0;
-          float db = 0;
-          float dc = 0;
-
-          bool isFTree = rF_in_preL == lF;
-          bool isGTree = rG_in_preL == lG;
-          int favouriteChild_in_preR = F->preL_to_preR[favouriteChild[i]];
-
-          if(lF == favouriteChild[i]) {
-            direction = 0;
-          }
-          if(rF == favouriteChild_in_preR) {
-            prev_fav_child = favouriteChild[i];
-            prev_fav_child_in_preR = F->preL_to_preR[prev_fav_child];
-            i--;
-            direction = 1;
-            favouriteChild_in_preR = F->preL_to_preR[favouriteChild[i]];
-          }
-
-
-          bool hasRightPart = (abs(favouriteChild_in_preR - prev_fav_child_in_preR) > 1);
-          bool hasLeftPart = (abs(favouriteChild[i] - prev_fav_child) > 1); 
-
-          if(DEBUG) {
-            ou << "favouriteChild = " << favouriteChild[i] << endl;
-            ou << "hasRightPart = " << hasRightPart << endl;
-            ou << "hasLeftPart = " << hasLeftPart << endl;
-          }
-
-          if(isGTree && isFTree) {
-            int rF_plus_one_in_preL = F->preR_to_preL[rF + 1];
-            da = (hasLeftPart ? forestdist[lF + 1][lG][rG] : forestdist[rF_plus_one_in_preL][lG][rG]) + costModel_.del((*F)[lF]->getLabel());
-            db = forestdist[lF][lG + 1][rG + 1] + costModel_.ins((*G)[lG]->getLabel());
-            //dc = forestdist[lF + 1][lG + 1][rG + 1] + delta[lF][lG] +costModel_.ren((*F)[lF]->getLabel(), (*G)[lG]->getLabel());
-            dc = delta[lF][lG] + costModel_.ren((*F)[lF]->getLabel(), (*G)[lG]->getLabel());
-            if(DEBUG) {
-              ou << "isGTree && isFTree" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              if(hasLeftPart) {
-                ou << "forestdist[" << lF + 1 << ", " << lG << ", " << rG << "] = " << forestdist[lF + 1][lG][rG] << endl;
-              } else {
-                ou << "forestdist[" << rF_plus_one_in_preL << ", " << lG << ", " << rG << "] = " << forestdist[rF_plus_one_in_preL][lG][rG] << endl;
-              }
-              ou << "forestdist[" << lF << ", " << lG + 1 << ", " << rG + 1 << "] = " << forestdist[lF][lG + 1][rG + 1] << endl;
-              ou << "forestdist[" << lF << ", " << lG << ", " << rG << "] = " << forestdist[lF][lG][rG] << endl;
-            }
-
-            if(forestdist[lF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> -" << endl;
-              }
-              map->setMap(lF, -1);
-              rF++;
-              lF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(-1, lG);
-              lG++;
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(lF, lG);
-              lG++;
-              rG++;
-              lF++;
-              rF++;
-              FcurrentForestSize--;
-              GcurrentForestSize--;
-            }
-          }
-
-          else if(isFTree && direction == 0) {
-            int rF_plus_one_in_preL = F->preR_to_preL[rF + 1];
-            da = (hasLeftPart ? forestdist[lF + 1][lG][rG] : forestdist[rF_plus_one_in_preL][lG][rG]) + costModel_.del((*F)[lF]->getLabel());
-            //da = forestdist[lF + 1][lG][rG] + costModel_.del((*F)[lF]->getLabel());
-            db = forestdist[lF][lG][rG + 1] + costModel_.ins((*G)[rG_in_preL]->getLabel());
-            int size_of_rG = (*G)[rG_in_preL]->getSubTreeSize();
-            dc = (hasLeftPart? forestdist[lF + 1][lG][rG + size_of_rG] : forestdist[rF_plus_one_in_preL][lG][rG + size_of_rG]) + costModel_.ren((*F)[lF]->getLabel(), (*G)[rG_in_preL]->getLabel());
-            //dc = forestdist[lF + 1][lG][rG + size_of_rG] + delta[lF][rG_in_preL] + costModel_.ren((*F)[lF]->getLabel(), (*G)[rG_in_preL]->getLabel());
-
-            if(DEBUG) {
-              ou << "isFTree && direction == 0" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF << ", " << lG << ", " << rG << "] = " << forestdist[lF][lG][rG] << endl;
-            }
-            if(forestdist[lF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> -" << endl;
-              }
-              map->setMap(lF, -1);
-              lF++;
-              rF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[rG_in_preL] << endl; 
-              }
-              map->setMap(-1, rG_in_preL);
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> " << (*G)[rG_in_preL]->getLabel() << endl;
-              }
-              map->setMap(lF, rG_in_preL);
-              if((*F)[lF]->getSubTreeSize() > 1 && (*G)[rG_in_preL]->getSubTreeSize() > 1) {
-                gteo((*F)[lF], (*G)[rG_in_preL]);
-              }
-              lF++;
-              rF++;
-              rG = rG + size_of_rG;
-              FcurrentForestSize--;
-              GcurrentForestSize -= size_of_rG;
-            }
-          }
-
-          else if(isFTree && direction == 1) {
-            int rF_plus_one_in_preL = F->preR_to_preL[rF + 1];
-            da = (hasLeftPart ? forestdist[lF + 1][lG][rG] : forestdist[rF_plus_one_in_preL][lG][rG]) + costModel_.del((*F)[lF]->getLabel());
-            //da = forestdist[lF + 1][lG][rG] + costModel_.del((*F)[lF]->getLabel());
-            db = forestdist[lF][lG + 1][rG] + costModel_.ins((*G)[lG]->getLabel());
-            int size_of_lG = (*G)[lG]->getSubTreeSize();
-            dc = (hasLeftPart? forestdist[lF + 1][lG + size_of_lG][rG] : forestdist[rF_plus_one_in_preL][lG + size_of_lG][rG]) + delta[lF][lG] + costModel_.ren((*F)[lF]->getLabel(), (*G)[lG]->getLabel());
-            //dc = forestdist[lF + 1][lG + size_of_lG][rG] + delta[lF][lG] + costModel_.ren((*F)[lF]->getLabel(), (*G)[lG]->getLabel());
-
-            if(DEBUG) {
-              ou << "isFTree && direction == 1" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF << ", " << lG << ", " << rG << "] = " << forestdist[lF][lG][rG] << endl;
-            }
-
-            if(forestdist[lF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> -" << endl;
-              }
-              map->setMap(lF, -1);
-              lF++;
-              rF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[lG]->getLabel() << endl;
-              } 
-              map->setMap(-1, lG);
-              lG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(lF, lG);
-              if((*F)[lF]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*F)[lF], (*G)[lG]);
-              }
-              lF++;
-              rF++;
-              lG = lG + size_of_lG;
-              FcurrentForestSize--;
-              GcurrentForestSize -= size_of_lG;
-            }
-          }
-
-          else if(isGTree && direction == 0) {
-            int rF_plus_one_in_preL = F->preR_to_preL[rF + 1];
-            da = forestdist[rF_plus_one_in_preL][lG][rG] + costModel_.del((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF_in_preL][lG + 1][rG + 1] + costModel_.ins((*G)[lG]->getLabel());
-            int size_of_rF = (*F)[rF_in_preL]->getSubTreeSize();
-            int rF_plus_size_of_rF_in_preL = F->preR_to_preL[rF + size_of_rF];
-            dc = forestdist[rF_in_preL - size_of_rF][lG + 1][rG + 1] + delta[rF_in_preL][lG] + costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[lG]->getLabel());
-
-     
-            if(DEBUG) {
-              ou << "isGTree && direction == 0" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << rF_in_preL << ", " << lG << ", " << rG << "] = " << forestdist[rF_in_preL][lG][rG] << endl;
-            }
-
-            if(forestdist[rF_in_preL][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> -" << endl;
-              }
-              map->setMap(rF_in_preL, -1);
-              rF++;
-              FcurrentForestSize--;
-            }
-            else if(forestdist[rF_in_preL][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(-1, lG);
-              lG++;
-              rG++;
-              GcurrentForestSize--;
-            }
-            else if(forestdist[rF_in_preL][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(rF_in_preL, lG);
-              if((*F)[rF_in_preL]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*F)[rF_in_preL], (*G)[lG]);
-              }
-              rF = rF + size_of_rF;
-              lG++;
-              rG++;
-              FcurrentForestSize -= size_of_rF;
-              GcurrentForestSize--;
-            }
-          }
-
-          else if(isGTree && direction == 1) {
-            da = (lF + 1 == favouriteChild[i] ? forestdist[rF_in_preL][lG][rG] : forestdist[lF + 1][lG][rG]) + costModel_.del((*F)[lF]->getLabel());
-            db = forestdist[lF][lG + 1][rG + 1] + costModel_.ins((*G)[lG]->getLabel());
-            int size_of_lF = (*F)[lF]->getSubTreeSize();
-            dc = (lF + size_of_lF == favouriteChild[i] ? forestdist[rF_in_preL][lG + 1][rG + 1] : forestdist[lF + size_of_lF][lG + 1][rG + 1]) + delta[lF][lG] + costModel_.ren((*F)[lF]->getLabel(), (*G)[lG]->getLabel());
-
-            if(DEBUG) {
-              ou << "isGTree && direction == 1" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF << ", " << lG << ", " << rG << "] = " << forestdist[lF][lG][rG] << endl;
-            }
-
-            if(forestdist[lF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> -" << endl; 
-              }
-              map->setMap(lF, -1);
-              lF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(-1, lG);
-              lG++;
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(lF, lG);
-              if((*F)[lF]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*F)[lF], (*G)[lG]);
-              }
-              lF = lF + size_of_lF;
-              lG++;
-              rG++;
-              FcurrentForestSize -= size_of_lF;
-              GcurrentForestSize--;
-            }
-          }
-
-          else if(direction == 0) {
-            int rF_plus_one_in_preL = F->preR_to_preL[rF + 1];
-            da = forestdist[rF_plus_one_in_preL][lG][rG] + costModel_.del((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF_in_preL][lG][rG + 1] + costModel_.ins((*G)[rG_in_preL]->getLabel());
-            int size_of_rF = (*F)[rF_in_preL]->getSubTreeSize();
-            int size_of_rG = (*G)[rG_in_preL]->getSubTreeSize();
-            int rF_plus_size_of_rF_in_preL = F->preR_to_preL[rF + size_of_rF];
-            dc = forestdist[rF_plus_size_of_rF_in_preL][lG][rG + size_of_rG] + delta[rF_in_preL][rG_in_preL] + costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[rG_in_preL]->getLabel());
-
-            if(DEBUG) {
-              ou << "Both forest && direction == 0" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl;
-              ou << "forestdist[" << rF_plus_one_in_preL << ", " << lG << ", " << rG << "] = " << forestdist[rF_plus_one_in_preL][lG][rG] << endl;
-              ou << "forestdist[" << rF_in_preL << ", " << lG << ", " << rG + 1 << "] = " << forestdist[rF_in_preL][lG][rG + 1] << endl;
-              ou << "forestdist[" << rF_plus_size_of_rF_in_preL << ", " << lG << ", " << rG + size_of_rG << "] = " << forestdist[rF_plus_size_of_rF_in_preL][lG][rG + size_of_rG] << endl;
-              ou << "forestdist[" << rF_in_preL << ", " << lG << ", " << rG << "] = " << forestdist[rF_in_preL][lG][rG] << endl;
-            }
-
-            if(forestdist[rF_in_preL][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> -" << endl;
-              }
-              map->setMap(rF_in_preL, -1);
-              rF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[rF_in_preL][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[rG_in_preL] << endl;
-              }
-              map->setMap(-1, rG_in_preL);
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[rF_in_preL][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[rG_in_preL]->getLabel() << endl;
-              }
-              map->setMap(rF_in_preL, rG_in_preL);
-              if((*F)[rF_in_preL]->getSubTreeSize() > 1 && (*G)[rG_in_preL]->getSubTreeSize() > 1) {
-                gteo((*F)[rF_in_preL], (*G)[rG_in_preL]);
-              }
-              rF = rF + size_of_rF;
-              rG = rG + size_of_rG;
-              FcurrentForestSize -= size_of_rF;
-              GcurrentForestSize -= size_of_rG;
-            }
-          }
-
-
-          //F and G are forest and direction = left
-          else if(direction == 1) {
-            da = (lF + 1 == favouriteChild[i] ? forestdist[rF_in_preL][lG][rG] : forestdist[lF + 1][lG][rG]) + costModel_.del((*F)[lF]->getLabel());
-            db = forestdist[lF][lG + 1][rG] + costModel_.ins((*G)[lG]->getLabel());
-            int size_of_lF = (*F)[lF]->getSubTreeSize();
-            int size_of_lG = (*G)[lG]->getSubTreeSize();
-            dc = (lF + size_of_lF == favouriteChild[i] ? forestdist[rF_in_preL][lG + size_of_lG][rG] : forestdist[lF + size_of_lF][lG + size_of_lG][rG]) + delta[lF][lG] + costModel_.ren((*F)[lF]->getLabel(), (*G)[lG]->getLabel());
-
-
-            if(DEBUG) {
-              ou << "Both forest && direction == 1" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              if(lF + 1 == favouriteChild[i]) ou << "forestdist[" << rF_in_preL << ", " << lG << ", " << rG << "] = " << forestdist[rF_in_preL][lG][rG] << endl;
-              else ou << "forestdist[" << lF + 1 << ", " << lG << ", " << rG << "] = " << forestdist[lF + 1][lG][rG] << endl;
-              ou << "forestdist[" << lF << ", " << lG + 1 << ", " << rG << "] = " << forestdist[lF][lG + 1][rG] << endl;
-              if(lF + size_of_lF == favouriteChild[i]) ou << "forestdist[" << rF_in_preL << ", " << lG + size_of_lG << ", " << rG << "] = " << forestdist[rF_in_preL][lG + size_of_lG][rG] << endl;
-              else ou << "forestdist[" << lF + size_of_lF << ", " << lG + size_of_lG << ", " << rG << "] = " << forestdist[lF + size_of_lF][lG + size_of_lG][rG] << endl;
-              ou << "forestdist[" << lF << ", " << lG << ", " << rG << "] = " << forestdist[lF][lG][rG] << endl;
-            }
-
-            if(forestdist[lF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> -" << endl;
-              }
-              map->setMap(lF, -1);
-              lF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(-1, lG);
-              lG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(lF, lG);
-              if((*F)[lF]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*F)[lF], (*G)[lG]);
-              }
-              lF = lF + size_of_lF;
-              lG = lG + size_of_lG;
-              FcurrentForestSize -= size_of_lF;
-              GcurrentForestSize -= size_of_lG; 
-            }
-          }     
-        }
-      } 
-
-
-
-
-      else if(direction == 0) {
-        float*** forestdist; 
-        forestdist = new float**[treeSizeA + 1];
-        for(int i = 0; i < treeSizeA + 1; i++) {
-          forestdist[i] = new float*[treeSizeB + 1];
-          for(int j = 0; j < treeSizeB + 1; j++) {
-            forestdist[i][j] = new float[treeSizeB + 1];
-          }
-        }
-        spfA_LR(a, b, pathLeaf, pathType, forestdist, false, true);
-
-        int lF = a->getID();
-        int rF = F->preL_to_preR[lF];
-        int FcurrentForestSize = a->getSubTreeSize();
-
-        int lG = b->getID();
-        int rG = G->preL_to_preR[lG];
-        int GcurrentForestSize = b->getSubTreeSize();
-
-
-        int direction = 0;//0 for right 1 for left;
-        int leaf = FreeStrategies[a->getID()][b->getID()].getLeaf();
-        Node* parent = (*F)[leaf]->getParent();
-        int* favouriteChild = new int[F->getTreeSize()];
-        int count = 0;
-        while(leaf != a->getID()) {
-          favouriteChild[count++] = leaf;
-          leaf = parent->getID();
-          parent = (*F)[leaf]->getParent();
-        }
-        favouriteChild[count++] = leaf;
-        int i = count - 1;
-        if(!(a->getID() == 0 && b->getID() == 0)) {
-          lF++;
-          rF++;
-          lG++;
-          rG++;
-          FcurrentForestSize--;
-          GcurrentForestSize--;
-          i--;
-        } 
-
-        int prev_fav_child = favouriteChild[count - 1];
-        int prev_fav_child_in_preR = F->preL_to_preR[prev_fav_child];
-        if(DEBUG) {
-          ou << "favouriteChild: " << endl;
-          for(int i = count - 1; i >= 0; i--) {
-            ou << favouriteChild[i] << " ";
-          }
-          ou << endl;
-        }
-
-
-        while(FcurrentForestSize > 0 && GcurrentForestSize > 0) {
-          if(DEBUG) {
-            ou << "(" << lF << ", " << rF << ", " << lG << ", " << rG << ")" << endl;
-            ou << "FcurrentForestSize = " << FcurrentForestSize << endl;
-            ou << "GcurrentForestSize = " << GcurrentForestSize << endl;
-          }
-          int rF_in_preL = F->preR_to_preL[rF];
-          int rG_in_preL = G->preR_to_preL[rG];
-          int lF_in_preR = F->preL_to_preR[lF];
-
-
-          float da = 0;
-          float db = 0;
-          float dc = 0;
-
-          bool isFTree = rF_in_preL == lF;
-          bool isGTree = rG_in_preL == lG;
-
-          int favouriteChild_in_preR = F->preL_to_preR[favouriteChild[i]];
-
-          if(rF == favouriteChild_in_preR) {
-            direction = 1;
-          }
-          if(lF == favouriteChild[i]) {
-            prev_fav_child = favouriteChild[i];
-            prev_fav_child_in_preR = F->preL_to_preR[prev_fav_child];
-            i--;
-            direction = 0;
-            favouriteChild_in_preR = F->preL_to_preR[favouriteChild[i]];
-          }
-
-
-          bool hasRightPart = (abs(favouriteChild_in_preR - prev_fav_child_in_preR) > 1);
-          bool hasLeftPart = (abs(favouriteChild[i] - prev_fav_child) > 1); 
-
-      
-          if(isGTree && isFTree) {
-            int lF_plus_one_in_preR = F->preL_to_preR[lF + 1];
-            da = (hasRightPart? forestdist[rF + 1][lG][rG] : forestdist[lF_plus_one_in_preR][lG][rG]) + costModel_.del((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF][lG + 1][rG + 1] + costModel_.ins((*G)[lG]->getLabel());
-            //dc = forestdist[rF + 1][lG + 1][rG + 1] + delta[rF_in_preL][lG] +costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[lG]->getLabel());
-            dc = delta[rF_in_preL][lG] +costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[lG]->getLabel());
-            if(DEBUG) {
-              ou << "isGTree && isFTree" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF_plus_one_in_preR << ", " << lG << ", " << rG << "] = " << forestdist[lF_plus_one_in_preR][lG][rG] << endl;
-              ou << "forestdist[" << rF << ", " << lG + 1 << ", " << rG + 1 << "] = " << forestdist[rF][lG + 1][rG + 1] << endl;
-              ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
-            }
-
-            if(forestdist[rF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> -" << endl;
-              }
-              map->setMap(rF_in_preL, -1);
-              rF++;
-              lF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[rF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(-1, lG);
-              lG++;
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[rF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(rF_in_preL, lG);
-              lG++;
-              rG++;
-              lF++;
-              rF++;
-              FcurrentForestSize--;
-              GcurrentForestSize--;
-            }
-          } 
-
-          else if(isFTree && direction == 0) {
-            int lF_plus_one_in_preR = F->preL_to_preR[lF + 1];
-            da = (hasRightPart? forestdist[rF + 1][lG][rG] : forestdist[lF_plus_one_in_preR][lG][rG]) + costModel_.del((*F)[rF_in_preL]->getLabel());
-            //da = forestdist[rF + 1][lG][rG] + costModel_.del((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF][lG][rG + 1] + costModel_.ins((*G)[rG_in_preL]->getLabel());
-            int size_of_rG = (*G)[rG_in_preL]->getSubTreeSize();
-            dc = (hasRightPart? forestdist[rF + 1][lG][rG + size_of_rG] : forestdist[lF_plus_one_in_preR][lG][rG + size_of_rG]) + delta[rF_in_preL][rG_in_preL] + costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[rG_in_preL]->getLabel());
-            //dc = forestdist[rF + 1][lG][rG + size_of_rG] + delta[rF_in_preL][rG_in_preL] + costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[rG_in_preL]->getLabel());
-
-            if(DEBUG) {
-              ou << "isFTree && direction == 0" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
-            }
-            if(forestdist[rF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> -" << endl;
-              }
-              map->setMap(rF_in_preL, -1);
-              lF++;
-              rF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[rF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[rG_in_preL] << endl; 
-              }
-              map->setMap(-1, rG_in_preL);
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[rF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[rG_in_preL]->getLabel() << endl;
-              }
-              map->setMap(rF_in_preL, rG_in_preL);
-              if((*F)[rF_in_preL]->getSubTreeSize() > 1 && (*G)[rG_in_preL]->getSubTreeSize() > 1) {
-                gteo((*F)[rF_in_preL], (*G)[rG_in_preL]);
-              }
-              lF++;
-              rF++;
-              rG = rG + size_of_rG;
-              FcurrentForestSize--;
-              GcurrentForestSize -= size_of_rG;
-            }
-          } 
-
-          else if(isFTree && direction == 1) {
-            int lF_plus_one_in_preR = F->preL_to_preR[lF + 1];
-            da = (hasRightPart? forestdist[rF + 1][lG][rG] : forestdist[lF_plus_one_in_preR][lG][rG]) + costModel_.del((*F)[rF_in_preL]->getLabel());
-            //da = forestdist[rF + 1][lG][rG] + costModel_.del((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF][lG + 1][rG] + costModel_.ins((*G)[lG]->getLabel());
-            int size_of_lG = (*G)[lG]->getSubTreeSize();
-            dc = (hasRightPart? forestdist[rF + 1][lG + size_of_lG][rG] :forestdist[lF_plus_one_in_preR][lG + size_of_lG][rG]) + delta[rF_in_preL][lG] + costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[lG]->getLabel());
-            //dc = forestdist[rF + 1][lG + size_of_lG][rG] + delta[rF_in_preL][lG] + costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[lG]->getLabel());
-
-            if(DEBUG) {
-              ou << "isFTree && direction == 1" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF_in_preR << ", " << lG << ", " << rG << "] = " << forestdist[lF_in_preR][lG][rG] << endl;
-            }
-
-            if(forestdist[lF_in_preR][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> -" << endl;
-              }
-              map->setMap(rF_in_preL, -1);
-              lF++;
-              rF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF_in_preR][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[lG]->getLabel() << endl;
-              } 
-              map->setMap(-1, lG);
-              lG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF_in_preR][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(rF_in_preL, lG);
-              if((*F)[rF_in_preL]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*F)[rF_in_preL], (*G)[lG]);
-              }
-              lF++;
-              rF++;
-              lG = lG + size_of_lG;
-              FcurrentForestSize--;
-              GcurrentForestSize -= size_of_lG;
-            }
-          } 
-
-          else if(isGTree && direction == 0) {
-            da = (rF + 1 == favouriteChild_in_preR ? forestdist[lF_in_preR][lG][rG] : forestdist[rF + 1][lG][rG]) + costModel_.del((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF][lG + 1][rG + 1] + costModel_.ins((*G)[lG]->getLabel());
-            int size_of_rF = (*F)[rF_in_preL]->getSubTreeSize();
-            dc = (rF + size_of_rF == favouriteChild_in_preR ? forestdist[lF_in_preR][lG][rG] : forestdist[rF + size_of_rF][lG + 1][rG + 1]) + delta[rF_in_preL][lG] + costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[lG]->getLabel());
-
-     
-            if(DEBUG) {
-              ou << "isGTree && direction == 0" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
-            }
-
-            if(forestdist[rF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> -" << endl;
-              }
-              map->setMap(rF_in_preL, -1);
-              rF++;
-              FcurrentForestSize--;
-            }
-            else if(forestdist[rF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(-1, lG);
-              lG++;
-              rG++;
-              GcurrentForestSize--;
-            }
-            else if(forestdist[rF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(rF_in_preL, lG);
-              if((*F)[rF_in_preL]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*F)[rF_in_preL], (*G)[lG]);
-              }
-              rF = rF + size_of_rF;
-              lG++;
-              rG++;
-              FcurrentForestSize -= size_of_rF;
-              GcurrentForestSize--;
-            }
-          } 
-
-          else if(isGTree && direction == 1) {
-            int lF_plus_one_in_preR = F->preL_to_preR[lF + 1];
-            da = forestdist[lF_plus_one_in_preR][lG][rG] + costModel_.del((*F)[lF]->getLabel());
-            db = forestdist[rF][lG + 1][rG + 1] + costModel_.ins((*G)[lG]->getLabel());
-            int size_of_lF = (*F)[lF]->getSubTreeSize();
-            int lF_plus_size_of_lF_in_preR = F->preL_to_preR[lF + size_of_lF];
-            dc = forestdist[lF_plus_size_of_lF_in_preR][lG + 1][rG + 1] + delta[lF][lG] + costModel_.ren((*F)[lF]->getLabel(), (*G)[lG]->getLabel());
-
-            if(DEBUG) {
-              ou << "isGTree && direction == 1" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF_in_preR << ", " << lG << ", " << rG << "] = " << forestdist[lF_in_preR][lG][rG] << endl;
-            }
-
-            if(forestdist[lF_in_preR][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> -" << endl; 
-              }
-              map->setMap(lF, -1);
-              lF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF_in_preR][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(-1, lG);
-              lG++;
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF_in_preR][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(lF, lG);
-              if((*F)[lF]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*F)[lF], (*G)[lG]);
-              }
-              lF = lF + size_of_lF;
-              lG++;
-              rG++;
-              FcurrentForestSize -= size_of_lF;
-              GcurrentForestSize--;
-            }
-          }
-          
-          //F and G are forest and direction = right
-          else if(direction == 0) {
-            da = (rF + 1 == favouriteChild_in_preR ? forestdist[lF_in_preR][lG][rG] : forestdist[rF + 1][lG][rG]) + costModel_.del((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF][lG][rG + 1] + costModel_.ins((*G)[rG_in_preL]->getLabel());
-            int size_of_rF = (*F)[rF_in_preL]->getSubTreeSize();
-            int size_of_rG = (*G)[rG_in_preL]->getSubTreeSize();
-            dc = (rF + size_of_rF == favouriteChild_in_preR ? forestdist[lF_in_preR][lG][rG] : forestdist[rF + size_of_rF][lG][rG + size_of_rG]) + delta[rF_in_preL][rG_in_preL] + costModel_.ren((*F)[rF_in_preL]->getLabel(), (*G)[rG_in_preL]->getLabel());
-
-            if(DEBUG) {
-              ou << "Both forest && direction == 0" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
-            }
-
-            if(forestdist[rF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> -" << endl;
-              }
-              map->setMap(rF_in_preL, -1);
-              rF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[rF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[rG_in_preL] << endl;
-              }
-              map->setMap(-1, rG_in_preL);
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[rF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[rF_in_preL]->getLabel() << " -> " << (*G)[rG_in_preL]->getLabel() << endl;
-              }
-              map->setMap(rF_in_preL, rG_in_preL);
-              if((*F)[rF_in_preL]->getSubTreeSize() > 1 && (*G)[rG_in_preL]->getSubTreeSize() > 1) {
-                gteo((*F)[rF_in_preL], (*G)[rG_in_preL]);
-              }
-              rF = rF + size_of_rF;
-              rG = rG + size_of_rG;
-              FcurrentForestSize -= size_of_rF;
-              GcurrentForestSize -= size_of_rG;
-            }
-          }
-          
-          //F and G are forest and direction = left
-          else if(direction == 1) {
-            int lF_plus_one_in_preR = F->preL_to_preR[lF + 1];
-            da = forestdist[lF_plus_one_in_preR][lG][rG] + costModel_.del((*F)[lF]->getLabel());
-            db = forestdist[lF_in_preR][lG + 1][rG] + costModel_.ins((*G)[lG]->getLabel());
-            int size_of_lF = (*F)[lF]->getSubTreeSize();
-            int size_of_lG = (*G)[lG]->getSubTreeSize();
-            int lF_plus_size_of_lF_in_preR = F->preL_to_preR[lF + size_of_lF];
-            dc = forestdist[lF_plus_size_of_lF_in_preR][lG + size_of_lG][rG] + delta[lF][lG] + costModel_.ren((*F)[lF]->getLabel(), (*G)[lG]->getLabel());
-
-
-            if(DEBUG) {
-              ou << "Both forest && direction == 1" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF_in_preR << ", " << lG << ", " << rG << "] = " << forestdist[lF_in_preR][lG][rG] << endl;
-            }
-
-            if(forestdist[lF_in_preR][lG][rG] == da) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> -" << endl;
-              }
-              map->setMap(lF, -1);
-              lF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF_in_preR][lG][rG] == db) {
-              if(DEBUG) {
-                ou << "- -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(-1, lG);
-              lG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF_in_preR][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*F)[lF]->getLabel() << " -> " << (*G)[lG]->getLabel() << endl;
-              }
-              map->setMap(lF, lG);
-              if((*F)[lF]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*F)[lF], (*G)[lG]);
-              }
-              lF = lF + size_of_lF;
-              lG = lG + size_of_lG; 
-              FcurrentForestSize -= size_of_lF;
-              GcurrentForestSize -= size_of_lG;
-            }
-          }
-
-
-        }
-      }
-    }
-
-  } else if(treeToDecompose == 1) {
-    F = B_;
-    G = A_;
-    pathType = getPathType(B_, b, pathLeaf);
-    if(DEBUG) {
-      ou << "pathType = " << pathType << endl;
-    }
-
-    if(pathType == 0) {
-      float** forestdist;
-      forestdist = new float*[b->getSubTreeSize() + 1];
-      for(int i = 0; i < b->getSubTreeSize() + 1; i++) {
-        forestdist[i] = new float[a->getSubTreeSize() + 1];
-      }
-      treeEditDist(b, a, forestdist, true, true);
-
-
-      int a_leftmost_leaf_in_preL = F->preL_to_lid[a->getID()];
-      int b_leftmost_leaf_in_preL = G->preL_to_lid[b->getID()];
-
-      int a_leftmost_leaf_in_postL = F->preL_to_postL[a_leftmost_leaf_in_preL];
-      int b_leftmost_leaf_in_postL = G->preL_to_postL[b_leftmost_leaf_in_preL];
-
-      int aoff = a_leftmost_leaf_in_postL - 1;//consider gap
-      int boff = b_leftmost_leaf_in_postL - 1;//consider gap
-
-      int FcurrentForestSize = b->getSubTreeSize();
-      int GcurrentForestSize = a->getSubTreeSize();
-
-      if(DEBUG) {
-        ou << "forestdist" << endl;
-        for(int i = 0; i < b->getSubTreeSize() + 1; i++) {
-          for(int j = 0; j < a->getSubTreeSize() + 1; j++) {
-            ou << forestdist[i][j] << " ";
-          }
-          ou << endl;
-        } 
-      }
-
-      int i = F->preL_to_postL[b->getID()] - boff;
-      int j = G->preL_to_postL[a->getID()] - aoff;
-
-      if(b->getID() != 0 && a->getID() != 0) {
-        i--;
-        j--;
-        FcurrentForestSize--;
-        GcurrentForestSize--;
-      }
-
-      while(FcurrentForestSize > 0 && GcurrentForestSize > 0) {
-        
-        int i_minus1_in_preL = F->postL_to_preL[i + boff];
-        int j_minus1_in_preL = G->postL_to_preL[j + aoff];
-        bool isFTree = F->preL_to_lid[i_minus1_in_preL] == F->preL_to_lid[b->getID()];
-        bool isGTree = G->preL_to_lid[j_minus1_in_preL] == G->preL_to_lid[a->getID()];
-        float da = forestdist[i - 1][j] + costModel_.ins((*F)[i_minus1_in_preL]->getLabel());
-        float db = forestdist[i][j - 1] + costModel_.del((*G)[j_minus1_in_preL]->getLabel());
-        int size_of_i_minus1_in_preL = (*F)[i_minus1_in_preL]->getSubTreeSize();
-        int size_of_j_minus1_in_preL = (*G)[j_minus1_in_preL]->getSubTreeSize();
-
-        float dc = forestdist[i - size_of_i_minus1_in_preL][j - size_of_j_minus1_in_preL] + delta[j_minus1_in_preL][i_minus1_in_preL] + costModel_.ren((*G)[j_minus1_in_preL]->getLabel(), (*F)[i_minus1_in_preL]->getLabel());
-          
-        if(DEBUG) {
-          ou << "i = " << i_minus1_in_preL << " j = " << j_minus1_in_preL << endl;
-        }
-
-        if(DEBUG) {
-          ou << "da = " << da << " db = " << db << " dc = " << dc << endl;
-          ou << "forestdist[" << i - 1 << ", " << j << "] = " << forestdist[i - 1][j] << endl;
-          ou << "forestdist[" << i << ", " << j - 1 << "] = " << forestdist[i][j - 1] << endl;
-          ou << "forestdist[" << i - size_of_i_minus1_in_preL << ", " << j - size_of_j_minus1_in_preL << "] = " << forestdist[i - size_of_i_minus1_in_preL][j - size_of_j_minus1_in_preL] << endl;
-          ou << "forestdist[" << i << ", " << j << "] = " << forestdist[i][j] << endl; 
-        }
-        if(da == forestdist[i][j]) {
-          map->setMap(-1, i_minus1_in_preL);
-          if(DEBUG) {
-            ou << "- -> " << (*F)[i_minus1_in_preL]->getLabel() << endl;
-          }
-          i = i - 1;
-          FcurrentForestSize--;
-        } else if(db == forestdist[i][j]) {
-          map->setMap(j_minus1_in_preL, -1);
-          if(DEBUG) {
-            ou << (*G)[j_minus1_in_preL]->getLabel() << " - ->" << endl;
-          }
-          j = j - 1;
-          GcurrentForestSize--;
-        } else if(dc == forestdist[i][j]) {
-          map->setMap(j_minus1_in_preL, i_minus1_in_preL);
-          if(DEBUG) {
-            ou << (*G)[j_minus1_in_preL]->getLabel() << "(" << j_minus1_in_preL << ")" << " -> " << (*F)[i_minus1_in_preL]->getLabel() << "(" << i_minus1_in_preL << ")" << endl;
-          }
-          if(isFTree && isGTree) {
-            i = i - 1;
-            j = j - 1;
-            FcurrentForestSize--;
-            GcurrentForestSize--;
-          }
-          else {
-            i = i - size_of_i_minus1_in_preL;
-            j = j - size_of_j_minus1_in_preL;
-            FcurrentForestSize -= size_of_i_minus1_in_preL;
-            GcurrentForestSize -= size_of_j_minus1_in_preL;
-            if((*F)[i_minus1_in_preL]->getSubTreeSize() > 1 && (*G)[j_minus1_in_preL]->getSubTreeSize() > 1) {
-              gteo((*G)[j_minus1_in_preL], (*F)[i_minus1_in_preL]);
-            }
-          }
-        }
-      }
-      while(FcurrentForestSize > 0) {
-        if(DEBUG) {
-          ou << "i = " << i << " j = 0" << endl;
-        } 
-        int i_minus1_in_preL = F->postL_to_preL[i - 1];
-        map->setMap(-1, i_minus1_in_preL);
-        i = i - 1;
-        FcurrentForestSize--;
-      }
-      while(GcurrentForestSize > 0) {
-        if(DEBUG) {
-          ou << "i = 0 j = " << j << endl;
-        }
-        int j_minus1_in_preL = G->postL_to_preL[j - 1];
-        map->setMap(j_minus1_in_preL, -1);
-        j = j - 1;
-        GcurrentForestSize--;
-      }
-    }
-    else if(pathType == 1) {
-      float** forestdist;
-
-      forestdist = new float*[b->getSubTreeSize() + 1];
-      for(int i = 0; i < b->getSubTreeSize() + 1; i++) {
-        forestdist[i] = new float[a->getSubTreeSize() + 1];
-      }
-      revTreeEditDist(b, a, forestdist, true, true);
-
-      int a_rightmost_leaf_in_preL = F->preL_to_rid[a->getID()];
-      int b_rightmost_leaf_in_preL = G->preL_to_rid[b->getID()];
-
-      int a_rightmost_leaf_in_postR = F->preL_to_postR[a_rightmost_leaf_in_preL];
-      int b_rightmost_leaf_in_postR = G->preL_to_postR[b_rightmost_leaf_in_preL];
-
-      int aoff = a_rightmost_leaf_in_postR - 1;//consider gap
-      int boff = b_rightmost_leaf_in_postR - 1;//consider gap
-
-      int FcurrentForestSize = b->getSubTreeSize();
-      int GcurrentForestSize = a->getSubTreeSize();
-
-      if(DEBUG) {
-        ou << "forestdist" << endl;
-        for(int i = 0; i < b->getSubTreeSize() + 1; i++) {
-          for(int j = 0; j < a->getSubTreeSize() + 1; j++) {
-            ou << forestdist[i][j] << " ";
-          }
-          ou << endl;
-        } 
-      }
-
-
-      int i = F->preL_to_postR[b->getID()] - boff;
-      int j = G->preL_to_postR[a->getID()] - aoff;
-
-      if(b->getID() != 0 && a->getID() != 0) {
-        i--;
-        j--;
-        FcurrentForestSize--;
-        GcurrentForestSize--;
-      }
-
-      while(FcurrentForestSize > 0 && GcurrentForestSize > 0) {
- 
-        int i_minus1_in_preL = F->postR_to_preL[i + boff];
-        int j_minus1_in_preL = G->postR_to_preL[j + aoff];
-        bool isFTree = F->preL_to_rid[i_minus1_in_preL] == F->preL_to_rid[b->getID()];
-        bool isGTree = G->preL_to_rid[j_minus1_in_preL] == G->preL_to_rid[a->getID()];
-        float da = forestdist[i - 1][j] + costModel_.ins((*F)[i_minus1_in_preL]->getLabel());
-        float db = forestdist[i][j - 1] + costModel_.del((*G)[j_minus1_in_preL]->getLabel());
-        int size_of_i_minus1_in_preL = (*F)[i_minus1_in_preL]->getSubTreeSize();
-        int size_of_j_minus1_in_preL = (*G)[j_minus1_in_preL]->getSubTreeSize();
-        float dc = forestdist[i - size_of_i_minus1_in_preL][j - size_of_j_minus1_in_preL] + delta[j_minus1_in_preL][i_minus1_in_preL] + costModel_.ren((*G)[j_minus1_in_preL]->getLabel(), (*F)[i_minus1_in_preL]->getLabel());
-
-
-        if(DEBUG) {
-          ou << "i = " << i_minus1_in_preL << " j = " << j_minus1_in_preL << endl;
-        }
-
-        if(DEBUG) {
-          ou << "da = " << da << " db = " << db << " dc = " << dc << endl;
-          ou << "forestdist[" << i - 1 << ", " << j << "] = " << forestdist[i - 1][j] << endl;
-          ou << "forestdist[" << i << ", " << j - 1 << "] = " << forestdist[i][j - 1] << endl;
-          ou << "forestdist[" << i - size_of_i_minus1_in_preL << ", " << j - size_of_j_minus1_in_preL << "] = " << forestdist[i - size_of_i_minus1_in_preL][j - size_of_j_minus1_in_preL] << endl;
-          ou << "forestdist[" << i << ", " << j << "] = " << forestdist[i][j] << endl; 
-        }
-        if(da == forestdist[i][j]) {
-          map->setMap(-1, i_minus1_in_preL);
-          if(DEBUG) {
-            ou << "- -> " << (*F)[i_minus1_in_preL]->getLabel() << endl;
-          }
-          i = i - 1;
-          FcurrentForestSize--;
-        } else if(db == forestdist[i][j]) {
-          map->setMap(j_minus1_in_preL, -1);
-          if(DEBUG) {
-            ou << (*G)[j_minus1_in_preL]->getLabel() << " - ->" << endl;
-          }
-          j = j - 1;
-          GcurrentForestSize--;
-        } else if(dc == forestdist[i][j]) {
-          map->setMap(j_minus1_in_preL, i_minus1_in_preL);
-          if(DEBUG) {
-            ou << (*G)[j_minus1_in_preL]->getLabel() << "(" << j_minus1_in_preL << ")" << " -> " << (*F)[i_minus1_in_preL]->getLabel() << "(" << i_minus1_in_preL << ")" << endl;
-          }
-          if(isFTree && isGTree) {
-            i = i - 1;
-            j = j - 1;
-            FcurrentForestSize--;
-            GcurrentForestSize--;
-          }
-          else {
-            i = i - size_of_i_minus1_in_preL;
-            j = j - size_of_j_minus1_in_preL;
-            FcurrentForestSize -= size_of_i_minus1_in_preL;
-            GcurrentForestSize -= size_of_j_minus1_in_preL;
-            if((*F)[i_minus1_in_preL]->getSubTreeSize() > 1 && (*G)[j_minus1_in_preL]->getSubTreeSize() > 1) {
-              gteo((*G)[j_minus1_in_preL], (*F)[i_minus1_in_preL]);
-            } 
-          }
-        }
-      }
-      while(FcurrentForestSize > 0) {
-        if(DEBUG) {
-          ou << "i = " << i << " j = 0" << endl;
-        } 
-        int i_minus1_in_preL = F->postR_to_preL[i - 1];
-        map->setMap(-1, i_minus1_in_preL);
-        i = i - 1;
-        FcurrentForestSize--;
-      }
-      while(GcurrentForestSize > 0) {
-        if(DEBUG) {
-          ou << "i = 0 j = " << j << endl;
-        }
-        int j_minus1_in_preL = G->postR_to_preL[j - 1];
-        map->setMap(j_minus1_in_preL, -1);
-        j = j - 1;
-        GcurrentForestSize--;
-      }
-    }
-
-    else if(pathType == 2) {
-      
-      if(direction == 0) {
-
-        float*** forestdist; 
-        forestdist = new float**[treeSizeB + 1];
-        for(int i = 0; i < treeSizeB + 1; i++) {
-          forestdist[i] = new float*[treeSizeA + 1];
-          for(int j = 0; j < treeSizeA + 1; j++) {
-            forestdist[i][j] = new float[treeSizeA + 1];
-          }
-        }
-        spfA_LR(b, a, pathLeaf, pathType, forestdist, true, true);
-
-        int lF = b->getID();
-        int rF = F->preL_to_preR[lF];
-        int FcurrentForestSize = b->getSubTreeSize();
-
-        int lG = a->getID();
-        int rG = G->preL_to_preR[lG];
-        int GcurrentForestSize = a->getSubTreeSize();
-
-
-        int direction = 0;//0 for right 1 for left;
-        int leaf = FreeStrategies[a->getID()][b->getID()].getLeaf();
-        Node* parent = (*F)[leaf]->getParent();
-        int* favouriteChild = new int[F->getTreeSize()];
-        int count = 0;
-        while(leaf != b->getID()) {
-          favouriteChild[count++] = leaf;
-          leaf = parent->getID();
-          parent = (*F)[leaf]->getParent();
-        }
-        favouriteChild[count++] = leaf;
-        int i = count - 1;
-        if(!(a->getID() == 0 && b->getID() == 0)) {
-          lF++;
-          rF++;
-          lG++;
-          rG++;
-          FcurrentForestSize--;
-          GcurrentForestSize--;
-          i--;
-        }
-
-        int prev_fav_child = favouriteChild[count - 1];
-        int prev_fav_child_in_preR = F->preL_to_preR[prev_fav_child];
-
-        if(DEBUG) {
-          ou << "favouriteChild: " << endl;
-          for(int i = count - 1; i >= 0; i--) {
-            ou << favouriteChild[i] << " ";
-          }
-          ou << endl;
-        }
-
-
-        while(FcurrentForestSize > 0 && GcurrentForestSize > 0) {
-          if(DEBUG) {
-            ou << "(" << lF << ", " << rF << ", " << lG << ", " << rG << ")" << endl;
-            ou << "FcurrentForestSize = " << FcurrentForestSize << endl;
-            ou << "GcurrentForestSize = " << GcurrentForestSize << endl;
-          }
-          int rF_in_preL = F->preR_to_preL[rF];
-          int rG_in_preL = G->preR_to_preL[rG];
-          int lF_in_preR = F->preL_to_preR[lF];
-
-          float da = 0;
-          float db = 0;
-          float dc = 0;
-
-          bool isFTree = rF_in_preL == lF;
-          bool isGTree = rG_in_preL == lG;
-          int favouriteChild_in_preR = F->preL_to_preR[favouriteChild[i]];
-
-          if(rF == favouriteChild_in_preR) {
-            direction = 1;
-          }
-          if(lF == favouriteChild[i]) {
-            prev_fav_child = favouriteChild[i];
-            prev_fav_child_in_preR = F->preL_to_preR[prev_fav_child];
-            i--;
-            direction = 0;
-            favouriteChild_in_preR = F->preL_to_preR[favouriteChild[i]];
-          }
-
-
-          bool hasRightPart = (abs(favouriteChild_in_preR - prev_fav_child_in_preR) > 1);
-          bool hasLeftPart = (abs(favouriteChild[i] - prev_fav_child) > 1); 
-      
-          if(isGTree && isFTree) {
-            int lF_plus_one_in_preR = F->preL_to_preR[lF + 1];
-            da = (hasRightPart? forestdist[rF + 1][lG][rG] : forestdist[lF_plus_one_in_preR][lG][rG]) + costModel_.ins((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF][lG + 1][rG + 1] + costModel_.del((*G)[lG]->getLabel());
-            //dc = forestdist[rF + 1][lG + 1][rG + 1] + delta[lG][rF_in_preL] +costModel_.ren((*G)[lG]->getLabel(), (*F)[rF_in_preL]->getLabel());
-            dc = delta[lG][rF_in_preL] +costModel_.ren((*G)[lG]->getLabel(), (*F)[rF_in_preL]->getLabel());
-            if(DEBUG) {
-              ou << "isGTree && isFTree" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF_plus_one_in_preR << ", " << lG << ", " << rG << "] = " << forestdist[lF_plus_one_in_preR][lG][rG] << endl;
-              ou << "forestdist[" << rF << ", " << lG + 1 << ", " << rG + 1 << "] = " << forestdist[rF][lG + 1][rG + 1] << endl;
-              ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
-            }
-
-            if(forestdist[rF][lG][rG] == da) {
-              if(DEBUG) {
-                ou <<  " - ->" << (*F)[rF_in_preL]->getLabel() << endl;
-              }
-              map->setMap(-1, rF_in_preL);
-              rF++;
-              lF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[rF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << "-> -" << endl;
-              }
-              map->setMap(lG, -1);
-              lG++;
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[rF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> " << (*F)[rF_in_preL]->getLabel() << endl;
-              }
-              map->setMap(lG, rF_in_preL);
-              lG++;
-              rG++;
-              lF++;
-              rF++;
-              FcurrentForestSize--;
-              GcurrentForestSize--;
-            }
-          } 
-
-          else if(isFTree && direction == 0) {
-            int lF_plus_one_in_preR = F->preL_to_preR[lF + 1];
-            da = (hasRightPart? forestdist[rF + 1][lG][rG] : forestdist[lF_plus_one_in_preR][lG][rG]) + costModel_.ins((*F)[rF_in_preL]->getLabel());
-            //da = forestdist[rF + 1][lG][rG] + costModel_.ins((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF][lG][rG + 1] + costModel_.del((*G)[rG_in_preL]->getLabel());
-            int size_of_rG = (*G)[rG_in_preL]->getSubTreeSize();
-            dc = (hasRightPart? forestdist[rF + 1][lG][rG + size_of_rG] : forestdist[lF_plus_one_in_preR][lG][rG + size_of_rG]) + delta[rG_in_preL][rF_in_preL] + costModel_.ren((*G)[rG_in_preL]->getLabel(), (*F)[rF_in_preL]->getLabel());
-            //dc = forestdist[rF + 1][lG][rG + size_of_rG] + delta[rG_in_preL][rF_in_preL] + costModel_.ren((*G)[rG_in_preL]->getLabel(), (*F)[rF_in_preL]->getLabel());
-
-            if(DEBUG) {
-              ou << "isFTree && direction == 0" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
-            }
-            if(forestdist[rF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << " - ->" << (*F)[rF_in_preL]->getLabel() <<  endl;
-              }
-              map->setMap(-1, rF_in_preL);
-              lF++;
-              rF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[rF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[rG_in_preL] << "-> - " << endl; 
-              }
-              map->setMap(rG_in_preL, -1);
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[rF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[rG_in_preL]->getLabel() << " -> " << (*F)[rF_in_preL]->getLabel() << endl;
-              }
-              map->setMap(rG_in_preL, rF_in_preL);
-              if((*F)[rF_in_preL]->getSubTreeSize() > 1 && (*G)[rG_in_preL]->getSubTreeSize() > 1) {
-                gteo((*G)[rG_in_preL], (*F)[rF_in_preL]);
-              }
-              lF++;
-              rF++;
-              rG = rG + size_of_rG;
-              FcurrentForestSize--;
-              GcurrentForestSize -= size_of_rG;
-            }
-          } 
-
-          else if(isFTree && direction == 1) {
-            int lF_plus_one_in_preR = F->preL_to_preR[lF + 1];
-            da = (hasRightPart? forestdist[rF + 1][lG][rG] : forestdist[lF_plus_one_in_preR][lG][rG]) + costModel_.ins((*F)[rF_in_preL]->getLabel());
-            //da = forestdist[rF + 1][lG][rG] + costModel_.ins((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF][lG + 1][rG] + costModel_.del((*G)[lG]->getLabel());
-            int size_of_lG = (*G)[lG]->getSubTreeSize();
-            dc = (hasRightPart? forestdist[rF + 1][lG + size_of_lG][rG] : forestdist[lF_plus_one_in_preR][lG + size_of_lG][rG]) + delta[lG][rF_in_preL] + costModel_.ren((*G)[lG]->getLabel(), (*F)[rF_in_preL]->getLabel());
-            //dc = forestdist[rF + 1][lG + size_of_lG][rG] + delta[lG][rF_in_preL] + costModel_.ren((*G)[lG]->getLabel(), (*F)[rF_in_preL]->getLabel());
-
-            if(DEBUG) {
-              ou << "isFTree && direction == 1" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF_in_preR << ", " << lG << ", " << rG << "] = " << forestdist[lF_in_preR][lG][rG] << endl;
-            }
-
-            if(forestdist[lF_in_preR][lG][rG] == da) {
-              if(DEBUG) {
-                ou <<  "- ->" << (*F)[rF_in_preL]->getLabel() << endl;
-              }
-              map->setMap(-1, rF_in_preL);
-              lF++;
-              rF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF_in_preR][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << "-> -" << endl;
-              } 
-              map->setMap(lG, -1);
-              lG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF_in_preR][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> " << (*F)[rF_in_preL]->getLabel() << endl;
-              }
-              map->setMap(lG, rF_in_preL);
-              if((*F)[rF_in_preL]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*G)[lG], (*F)[rF_in_preL]);
-              }
-              lF++;
-              rF++;
-              lG = lG + size_of_lG;
-              FcurrentForestSize--;
-              GcurrentForestSize -= size_of_lG;
-            }
-          } 
-
-          else if(isGTree && direction == 0) {
-            da = forestdist[rF + 1][lG][rG] + costModel_.ins((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF][lG + 1][rG + 1] + costModel_.del((*G)[lG]->getLabel());
-            int size_of_rF = (*F)[rF_in_preL]->getSubTreeSize();
-            dc = forestdist[rF + size_of_rF][lG + 1][rG + 1] + delta[lG][rF_in_preL] + costModel_.ren((*G)[lG]->getLabel(), (*F)[rF_in_preL]->getLabel());
-
-     
-            if(DEBUG) {
-              ou << "isGTree && direction == 0" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
-            }
-
-            if(forestdist[rF][lG][rG] == da) {
-              if(DEBUG) {
-                ou <<  "- ->" << (*F)[rF_in_preL]->getLabel() << endl;
-              }
-              map->setMap(-1, rF_in_preL);
-              rF++;
-              FcurrentForestSize--;
-            }
-            else if(forestdist[rF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() <<  "-> -" << endl;
-              }
-              map->setMap(lG, -1);
-              lG++;
-              rG++;
-              GcurrentForestSize--;
-            }
-            else if(forestdist[rF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> " << (*F)[rF_in_preL]->getLabel() <<  endl;
-              }
-              map->setMap(lG, rF_in_preL);
-              if((*F)[rF_in_preL]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*G)[lG], (*F)[rF_in_preL]);
-              }
-              rF = rF + size_of_rF;
-              lG++;
-              rG++;
-              FcurrentForestSize -= size_of_rF;
-              GcurrentForestSize--;
-            }
-          } 
-
-          else if(isGTree && direction == 1) {
-            int lF_plus_one_in_preR = F->preL_to_preR[lF + 1];
-            da = forestdist[lF_plus_one_in_preR][lG][rG] + costModel_.ins((*F)[lF]->getLabel());
-            db = forestdist[rF][lG + 1][rG + 1] + costModel_.del((*G)[lG]->getLabel());
-            int size_of_lF = (*F)[lF]->getSubTreeSize();
-            int lF_plus_size_of_lF_in_preR = F->preL_to_preR[lF + size_of_lF];
-            dc = forestdist[lF_plus_size_of_lF_in_preR][lG + 1][rG + 1] + delta[lG][lF] + costModel_.ren((*G)[lG]->getLabel(), (*F)[lF]->getLabel());
-
-            if(DEBUG) {
-              ou << "isGTree && direction == 1" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF_in_preR << ", " << lG << ", " << rG << "] = " << forestdist[lF_in_preR][lG][rG] << endl;
-            }
-
-            if(forestdist[lF_in_preR][lG][rG] == da) {
-              if(DEBUG) {
-                ou << "- ->" << (*F)[lF]->getLabel() << endl; 
-              }
-              map->setMap(-1, lF);
-              lF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF_in_preR][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << "-> -" << endl;
-              }
-              map->setMap(lG, -1);
-              lG++;
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF_in_preR][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> " << (*F)[lF]->getLabel() << endl;
-              }
-              map->setMap(lG, lF);
-              if((*F)[lF]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*G)[lG], (*F)[lF]);
-              }
-              lF = lF + size_of_lF;
-              lG++;
-              rG++;
-              FcurrentForestSize -= size_of_lF;
-              GcurrentForestSize--;
-            }
-          }
-          
-          //F and G are forest and direction = right
-          else if(direction == 0) {
-            da = forestdist[rF + 1][lG][rG] + costModel_.ins((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF][lG][rG + 1] + costModel_.del((*G)[rG_in_preL]->getLabel());
-            int size_of_rF = (*F)[rF_in_preL]->getSubTreeSize();
-            int size_of_rG = (*G)[rG_in_preL]->getSubTreeSize();
-            dc = forestdist[rF + size_of_rF][lG][rG + size_of_rG] + delta[rG_in_preL][rF_in_preL] + costModel_.ren((*G)[rG_in_preL]->getLabel(), (*F)[rF_in_preL]->getLabel());
-
-            if(DEBUG) {
-              ou << "Both forest && direction == 0" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << rF << ", " << lG << ", " << rG << "] = " << forestdist[rF][lG][rG] << endl;
-            }
-
-            if(forestdist[rF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << " - -> " << (*F)[rF_in_preL]->getLabel() << endl;
-              }
-              map->setMap(-1, rF_in_preL);
-              rF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[rF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[rG_in_preL] << "-> -" << endl;
-              }
-              map->setMap(rG_in_preL, -1);
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[rF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[rG_in_preL]->getLabel() << " -> " <<  (*F)[rF_in_preL]->getLabel() <<  endl;
-              }
-              map->setMap(rG_in_preL, rF_in_preL);
-              if((*F)[rF_in_preL]->getSubTreeSize() > 1 && (*G)[rG_in_preL]->getSubTreeSize() > 1) {
-                gteo((*G)[rG_in_preL], (*F)[rF_in_preL]);
-              }
-              rF = rF + size_of_rF;
-              rG = rG + size_of_rG;
-              FcurrentForestSize -= size_of_rF;
-              GcurrentForestSize -= size_of_rG;
-            }
-          }
-          
-          //F and G are forest and direction = left
-          else if(direction == 1) {
-            int lF_plus_one_in_preR = F->preL_to_preR[lF + 1];
-            da = forestdist[lF_plus_one_in_preR][lG][rG] + costModel_.ins((*F)[lF]->getLabel());
-            db = forestdist[lF_in_preR][lG + 1][rG] + costModel_.del((*G)[lG]->getLabel());
-            int size_of_lF = (*F)[lF]->getSubTreeSize();
-            int size_of_lG = (*G)[lG]->getSubTreeSize();
-            int lF_plus_size_of_lF_in_preR = F->preL_to_preR[lF + size_of_lF];
-            dc = forestdist[lF_plus_size_of_lF_in_preR][lG + size_of_lG][rG] + delta[lG][lF] + costModel_.ren((*G)[lG]->getLabel(), (*F)[lF]->getLabel());
-
-
-            if(DEBUG) {
-              ou << "Both forest && direction == 1" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF_in_preR << ", " << lG << ", " << rG << "] = " << forestdist[lF_in_preR][lG][rG] << endl;
-            }
-
-            if(forestdist[lF_in_preR][lG][rG] == da) {
-              if(DEBUG) {
-                ou << " - ->" << (*F)[lF]->getLabel() << endl;
-              }
-              map->setMap(-1, lF);
-              lF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF_in_preR][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() <<  "-> -" << endl;
-              }
-              map->setMap(lG, -1);
-              lG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF_in_preR][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> " << (*F)[lF]->getLabel() <<  endl;
-              }
-              map->setMap(lG, lF);
-              if((*F)[lF]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*G)[lG], (*F)[lF]);
-              }
-              lF = lF + size_of_lF;
-              lG = lG + size_of_lG; 
-              FcurrentForestSize -= size_of_lF;
-              GcurrentForestSize -= size_of_lG;
-            }
-          }
-
-
-        }
-      } 
-
-      else if(direction == 1) {
-
-        float*** forestdist;
-        forestdist = new float**[treeSizeB + 1];
-        for(int i = 0; i < treeSizeB + 1; i++) {
-          forestdist[i] = new float*[treeSizeA + 1];
-          for(int j = 0; j < treeSizeA + 1; j++) {
-            forestdist[i][j] = new float[treeSizeA + 1];
-          }
-        }
-        spfA_RL(b, a, pathLeaf, pathType, forestdist, true, true);
-
-        int lF = b->getID();
-        int rF = F->preL_to_preR[lF];
-        int FcurrentForestSize = b->getSubTreeSize();
-
-        int lG = a->getID();
-        int rG = G->preL_to_preR[lG];
-        int GcurrentForestSize = a->getSubTreeSize();
-
-
-        int direction = 1;//0 for right 1 for left;
-        int leaf = FreeStrategies[a->getID()][b->getID()].getLeaf();
-        Node* parent = (*F)[leaf]->getParent();
-        int* favouriteChild = new int[F->getTreeSize()];
-        int count = 0;
-        while(leaf != b->getID()) {
-          favouriteChild[count++] = leaf;
-          leaf = parent->getID();
-          parent = (*F)[leaf]->getParent();
-        }
-        favouriteChild[count++] = leaf;
-        int i = count - 1;
-        if(!(a->getID() == 0 && b->getID() == 0)) {
-          lF++;
-          rF++;
-          lG++;
-          rG++;
-          FcurrentForestSize--;
-          GcurrentForestSize--;
-          i--;
-        }
-
-        int prev_fav_child = favouriteChild[count - 1];
-        int prev_fav_child_in_preR = F->preL_to_preR[prev_fav_child];
-
-        if(DEBUG) {
-          ou << "favouriteChild: " << endl;
-          for(int i = count - 1; i >= 0; i--) {
-            ou << favouriteChild[i] << " ";
-          }
-          ou << endl;
-        }
-
-
-        while(FcurrentForestSize > 0 && GcurrentForestSize > 0) {
-          if(DEBUG) {
-            ou << "(" << lF << ", " << rF << ", " << lG << ", " << rG << ")" << endl;
-            ou << "FcurrentForestSize = " << FcurrentForestSize << endl;
-            ou << "GcurrentForestSize = " << GcurrentForestSize << endl;
-          }
-          int rF_in_preL = F->preR_to_preL[rF];
-          int rG_in_preL = G->preR_to_preL[rG];
-          int lF_in_preR = F->preL_to_preR[lF];
-
-          float da = 0;
-          float db = 0;
-          float dc = 0;
-
-          int favouriteChild_in_preR = F->preL_to_preR[favouriteChild[i]];
-
-          if(lF == favouriteChild[i]) {
-            direction = 0;
-          }
-          if(rF == favouriteChild_in_preR) {
-            prev_fav_child = favouriteChild[i];
-            prev_fav_child_in_preR = F->preL_to_preR[prev_fav_child];
-            i--;
-            direction = 1;
-            favouriteChild_in_preR = F->preL_to_preR[favouriteChild[i]];
-          }
-
-          bool isFTree = rF_in_preL == lF;
-          bool isGTree = rG_in_preL == lG;
-
-
-          bool hasRightPart = (abs(favouriteChild_in_preR - prev_fav_child_in_preR) > 1);
-          bool hasLeftPart = (abs(favouriteChild[i] - prev_fav_child) > 1); 
-          if(DEBUG) {
-            ou << "hasRightPart = " << hasRightPart << endl;
-            ou << "hasLeftPart = " << hasLeftPart << endl;
-            ou << "favouriteChild = " << favouriteChild[i] << endl;
-            ou << "favouriteChild_in_preR = " << favouriteChild_in_preR << endl;
-          }
-
-          if(isGTree && isFTree) {
-            int rF_plus_one_in_preL = F->preR_to_preL[rF + 1];
-            da = (hasLeftPart ? forestdist[lF + 1][lG][rG] : forestdist[rF_plus_one_in_preL][lG][rG]) + costModel_.ins((*F)[lF]->getLabel());
-            db = forestdist[lF][lG + 1][rG + 1] + costModel_.del((*G)[lG]->getLabel());
-            //dc = forestdist[lF + 1][lG + 1][rG + 1] + delta[lG][lF] +costModel_.ren((*G)[lG]->getLabel(), (*F)[lF]->getLabel());
-            dc = delta[lG][lF] +costModel_.ren((*G)[lG]->getLabel(), (*F)[lF]->getLabel());
-            if(DEBUG) {
-              ou << "isGTree && isFTree" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << rF_plus_one_in_preL << ", " << lG << ", " << rG << "] = " << forestdist[rF_plus_one_in_preL][lG][rG] << endl;
-              ou << "forestdist[" << lF << ", " << lG + 1 << ", " << rG + 1 << "] = " << forestdist[lF][lG + 1][rG + 1] << endl;
-              ou << "forestdist[" << lF << ", " << lG << ", " << rG << "] = " << forestdist[lF][lG][rG] << endl;
-            }
-
-            if(forestdist[lF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << " -> -" << (*F)[lF]->getLabel() << endl;
-              }
-              map->setMap(-1, lF);
-              rF++;
-              lF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() <<  "-> -" << endl;
-              }
-              map->setMap(lG, -1);
-              lG++;
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> " << (*F)[lF]->getLabel() << endl;
-              }
-              map->setMap(lG, lF);
-              lG++;
-              rG++;
-              lF++;
-              rF++;
-              FcurrentForestSize--;
-              GcurrentForestSize--;
-            }
-          }
-
-          else if(isFTree && direction == 0) {
-            int rF_plus_one_in_preL = F->preR_to_preL[rF + 1];
-            da = (hasLeftPart ? forestdist[lF + 1][lG][rG] : forestdist[rF_plus_one_in_preL][lG][rG]) + costModel_.ins((*F)[lF]->getLabel());
-            //da = forestdist[lF + 1][lG][rG] + costModel_.ins((*F)[lF]->getLabel());
-            db = forestdist[lF][lG][rG + 1] + costModel_.del((*G)[rG_in_preL]->getLabel());
-            int size_of_rG = (*G)[rG_in_preL]->getSubTreeSize();
-            dc = (hasLeftPart ? forestdist[lF + 1][lG][rG + size_of_rG] : forestdist[rF_plus_one_in_preL][lG][rG + size_of_rG]) + delta[rG_in_preL][lF] + costModel_.ren((*G)[rG_in_preL]->getLabel(), (*F)[lF]->getLabel());
-            //dc = forestdist[lF + 1][lG][rG + size_of_rG] + delta[rG_in_preL][lF] + costModel_.ren((*G)[rG_in_preL]->getLabel(), (*F)[lF]->getLabel());
-
-            if(DEBUG) {
-              ou << "isFTree && direction == 0" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF + 1 << ", " << lG << ", " << rG << "] = " << forestdist[lF + 1][lG][rG] << endl;
-              ou << "forestdist[" << lF << ", " << lG << ", " << rG + 1 << "] = " << forestdist[lF][lG][rG + 1] << endl;
-              ou << "forestdist[" << lF + 1 << ", " << lG << ", " << rG + size_of_rG << "] = " << forestdist[lF + 1][lG][rG + size_of_rG] << endl;
-              ou << "forestdist[" << lF << ", " << lG << ", " << rG << "] = " << forestdist[lF][lG][rG] << endl;
-            }
-            if(forestdist[lF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << "- -> " << (*F)[lF]->getLabel() << endl;
-              }
-              map->setMap(-1, lF);
-              lF++;
-              rF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[rG_in_preL] << "-> -" << endl; 
-              }
-              map->setMap(rG_in_preL, -1);
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[rG_in_preL]->getLabel() << " -> " << (*F)[lF]->getLabel() << endl;
-              }
-              map->setMap(rG_in_preL, lF);
-              if((*F)[lF]->getSubTreeSize() > 1 && (*G)[rG_in_preL]->getSubTreeSize() > 1) {
-                gteo((*G)[rG_in_preL], (*F)[lF]);
-              }
-              lF++;
-              rF++;
-              rG = rG + size_of_rG;
-              FcurrentForestSize--;
-              GcurrentForestSize -= size_of_rG;
-            }
-          }
-
-          else if(isFTree && direction == 1) {
-            int rF_plus_one_in_preL = F->preR_to_preL[rF + 1];
-            da = (hasLeftPart ? forestdist[lF + 1][lG][rG] : forestdist[rF_plus_one_in_preL][lG][rG]) + costModel_.ins((*F)[lF]->getLabel());
-            //da = forestdist[lF + 1][lG][rG] + costModel_.ins((*F)[lF]->getLabel());
-            db = forestdist[lF][lG + 1][rG] + costModel_.del((*G)[lG]->getLabel());
-            int size_of_lG = (*G)[lG]->getSubTreeSize();
-            dc = (hasLeftPart ? forestdist[lF + 1][lG + size_of_lG][rG] : forestdist[rF_plus_one_in_preL][lG + size_of_lG][rG]) + delta[lG][lF] + costModel_.ren((*G)[lG]->getLabel(), (*F)[lF]->getLabel());
-            //dc = forestdist[lF + 1][lG + size_of_lG][rG] + delta[lG][lF] + costModel_.ren((*G)[lG]->getLabel(), (*F)[lF]->getLabel());
-
-            if(DEBUG) {
-              ou << "isFTree && direction == 1" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF + 1 << ", " << lG << ", " << rG << "] = " << forestdist[lF + 1][lG][rG] << endl;
-              ou << "forestdist[" << lF << ", " << lG + 1 << ", " << rG << "] = " << forestdist[lF][lG + 1][rG] << endl;
-              ou << "forestdist[" << lF + 1 << ", " << lG + size_of_lG << ", " << rG << "] = " << forestdist[lF + 1][lG + size_of_lG][rG] << endl;
-              ou << "forestdist[" << lF << ", " << lG << ", " << rG << "] = " << forestdist[lF][lG][rG] << endl;
-            }
-
-            if(forestdist[lF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << "- -> " << (*F)[lF]->getLabel() << endl;
-              }
-              map->setMap(-1, lF);
-              lF++;
-              rF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> - " << endl;
-              } 
-              map->setMap(lG, -1);
-              lG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> " << (*F)[lF]->getLabel() <<  endl;
-              }
-              map->setMap(lF, lG);
-              if((*F)[lF]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*G)[lG], (*F)[lF]);
-              }
-              lF++;
-              rF++;
-              lG = lG + size_of_lG;
-              FcurrentForestSize--;
-              GcurrentForestSize -= size_of_lG;
-            }
-          }
-
-          else if(isGTree && direction == 0) {
-            int rF_plus_one_in_preL = F->preR_to_preL[rF + 1];
-            da = forestdist[rF_plus_one_in_preL][lG][rG] + costModel_.ins((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF_in_preL][lG + 1][rG + 1] + costModel_.del((*G)[lG]->getLabel());
-            int size_of_rF = (*F)[rF_in_preL]->getSubTreeSize();
-            int rF_plus_size_of_rF_in_preL = F->preR_to_preL[rF + size_of_rF];
-            dc = forestdist[rF_plus_size_of_rF_in_preL][lG + 1][rG + 1] + delta[lG][rF_in_preL] + costModel_.ren((*G)[lG]->getLabel(), (*F)[rF_in_preL]->getLabel());
-
-     
-            if(DEBUG) {
-              ou << "isGTree && direction == 0" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << rF_in_preL << ", " << lG << ", " << rG << "] = " << forestdist[rF_in_preL][lG][rG] << endl;
-            }
-
-            if(forestdist[rF_in_preL][lG][rG] == da) {
-              if(DEBUG) {
-                ou << " - -> " << (*F)[rF_in_preL]->getLabel() <<  endl;
-              }
-              map->setMap(-1, rF_in_preL);
-              rF++;
-              FcurrentForestSize--;
-            }
-            else if(forestdist[rF_in_preL][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> -" <<  endl;
-              }
-              map->setMap(lG, -1);
-              lG++;
-              rG++;
-              GcurrentForestSize--;
-            }
-            else if(forestdist[rF_in_preL][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> " << (*F)[rF_in_preL]->getLabel() << endl;
-              }
-              map->setMap(lG, rF_in_preL);
-              if((*F)[rF_in_preL]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*G)[lG], (*F)[rF_in_preL]);
-              }
-              rF = rF + size_of_rF;
-              lG++;
-              rG++;
-              FcurrentForestSize -= size_of_rF;
-              GcurrentForestSize--;
-            }
-          }
-
-          else if(isGTree && direction == 1) {
-            da = forestdist[lF + 1][lG][rG] + costModel_.ins((*F)[lF]->getLabel());
-            db = forestdist[lF][lG + 1][rG + 1] + costModel_.del((*G)[lG]->getLabel());
-            int size_of_lF = (*F)[lF]->getSubTreeSize();
-            dc = forestdist[lF + size_of_lF][lG + 1][rG + 1] + delta[lG][lF] + costModel_.ren((*G)[lG]->getLabel(), (*F)[lF]->getLabel());
-
-            if(DEBUG) {
-              ou << "isGTree && direction == 1" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF << ", " << lG << ", " << rG << "] = " << forestdist[lF][lG][rG] << endl;
-            }
-
-            if(forestdist[lF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << " - -> " << (*F)[lF]->getLabel() <<  endl; 
-              }
-              map->setMap(-1, lF);
-              lF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> -" <<  endl;
-              }
-              map->setMap(lG, -1);
-              lG++;
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> " << (*F)[lF]->getLabel() <<  endl;
-              }
-              map->setMap(lG, lF);
-              if((*F)[lF]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*G)[lG], (*F)[lF]);
-              }
-              lF = lF + size_of_lF;
-              lG++;
-              rG++;
-              FcurrentForestSize -= size_of_lF;
-              GcurrentForestSize--;
-            }
-          }
-
-          else if(direction == 0) {
-            int rF_plus_one_in_preL = F->preR_to_preL[rF + 1];
-            da = forestdist[rF_plus_one_in_preL][lG][rG] + costModel_.ins((*F)[rF_in_preL]->getLabel());
-            db = forestdist[rF_in_preL][lG][rG + 1] + costModel_.del((*G)[rG_in_preL]->getLabel());
-            int size_of_rF = (*F)[rF_in_preL]->getSubTreeSize();
-            int size_of_rG = (*G)[rG_in_preL]->getSubTreeSize();
-            int rF_plus_size_of_rF_in_preL = F->preR_to_preL[rF + size_of_rF];
-            dc = forestdist[rF_plus_size_of_rF_in_preL][lG][rG + size_of_rG] + delta[rG_in_preL][rF_in_preL] + costModel_.ren((*G)[rG_in_preL]->getLabel(), (*F)[rF_in_preL]->getLabel());
-
-            if(DEBUG) {
-              ou << "Both forest && direction == 0" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << rF_in_preL << ", " << lG << ", " << rG << "] = " << forestdist[rF_in_preL][lG][rG] << endl;
-            }
-
-            if(forestdist[rF_in_preL][lG][rG] == da) {
-              if(DEBUG) {
-                ou << " - -> " <<  (*F)[rF_in_preL]->getLabel() << endl;
-              }
-              map->setMap(-1, rF_in_preL);
-              rF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[rF_in_preL][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[rG_in_preL] << " -> -" <<  endl;
-              }
-              map->setMap(rG_in_preL, -1);
-              rG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[rF_in_preL][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[rG_in_preL]->getLabel() << " -> " << (*F)[rF_in_preL]->getLabel() << endl;
-              }
-              map->setMap(rG_in_preL, rF_in_preL);
-              if((*F)[rF_in_preL]->getSubTreeSize() > 1 && (*G)[rG_in_preL]->getSubTreeSize() > 1) {
-                gteo((*G)[rG_in_preL], (*F)[rF_in_preL]);
-              }
-              rF = rF + size_of_rF;
-              rG = rG + size_of_rG;
-              FcurrentForestSize -= size_of_rF;
-              GcurrentForestSize -= size_of_rG;
-            }
-          }
-
-
-          //F and G are forest and direction = left
-          else if(direction == 1) {
-            da = forestdist[lF + 1][lG][rG] + costModel_.ins((*F)[lF]->getLabel());
-            db = forestdist[lF][lG + 1][rG] + costModel_.del((*G)[lG]->getLabel());
-            int size_of_lF = (*F)[lF]->getSubTreeSize();
-            int size_of_lG = (*G)[lG]->getSubTreeSize();
-            dc = forestdist[lF + size_of_lF][lG + size_of_lG][rG] + delta[lG][lF] + costModel_.ren((*G)[lG]->getLabel(), (*F)[lF]->getLabel());
-
-
-            if(DEBUG) {
-              ou << "Both forest && direction == 1" << endl;
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl; 
-              ou << "forestdist[" << lF + 1 << ", " << lG << ", " << rG << "] = " << forestdist[lF + 1][lG][rG] << endl;
-              ou << "forestdist[" << lF << ", " << lG + 1 << ", " << rG << "] = " << forestdist[lF][lG + 1][rG] << endl;
-              ou << "forestdist" << lF + size_of_lF << ", " << lG + size_of_lG << ", " << rG << "] = " << forestdist[lF + size_of_lF][lG + size_of_lG][rG] << endl;
-              ou << "forestdist[" << lF << ", " << lG << ", " << rG << "] = " << forestdist[lF][lG][rG] << endl;
-            }
-
-            if(forestdist[lF][lG][rG] == da) {
-              if(DEBUG) {
-                ou << " - -> " << (*F)[lF]->getLabel() << endl;
-              }
-              map->setMap(-1, lF);
-              lF++;
-              FcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == db) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> - " << endl;
-              }
-              map->setMap(lG, -1);
-              lG++;
-              GcurrentForestSize--;
-            }
-
-            else if(forestdist[lF][lG][rG] == dc) {
-              if(DEBUG) {
-                ou << (*G)[lG]->getLabel() << " -> " << (*F)[lF]->getLabel() << endl;
-              }
-              map->setMap(lG, lF);
-              if((*F)[lF]->getSubTreeSize() > 1 && (*G)[lG]->getSubTreeSize() > 1) {
-                gteo((*G)[lG], (*F)[lF]);
-              }
-              lF = lF + size_of_lF;
-              lG = lG + size_of_lG; 
-              FcurrentForestSize -= size_of_lF;
-              GcurrentForestSize -= size_of_lG;
-            }
-          }     
-        }
-
-
-
-
-      }
-    }
-  }
-};
-*/
-
 
 char** TreeComparison::getResult(void) {
   int maxSize = rB_.getRNASize() + rA_.getRNASize();
