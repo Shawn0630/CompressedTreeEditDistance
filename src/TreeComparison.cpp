@@ -93,9 +93,11 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
 			AllA[i][j] = -1;
 			AllB[i][j] = -1;
 			delta[i][j] = 0.0f;
+      delta_tree[i][j] = 0.0f;
 			hasVisited[i][j] = false;
 		}
 	}
+  delta_tree[treeSizeA][treeSizeB] = 0.0f;
 
 	ou.open("out.txt");
 
@@ -122,10 +124,15 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
   }
 
   delta_compressed_tree = new float*[compressedTreeSizeA + 1];
-  for(int i = 0; i < compressedTreeSizeA; i++) {
+  for(int i = 0; i <= compressedTreeSizeA; i++) {
     delta_compressed_tree[i] = new float[compressedTreeSizeB + 1];
   }
-  delta_compressed_tree[compressedTreeSizeA] = new float[compressedTreeSizeB + 1];
+
+  for(int i = 0; i <= compressedTreeSizeA; i++) {
+    for(int j = 0; j <= compressedTreeSizeB; j++) {
+      delta_compressed_tree[i][j] = 0.0f;
+    }
+  }
   deltaInit();
 
 };
@@ -222,9 +229,11 @@ void TreeComparison::init(string fileName) {
       AllA[i][j] = -1;
       AllB[i][j] = -1;
       delta[i][j] = 0.0f;
+      delta_tree[i][j] = 0.0f;
       hasVisited[i][j] = false;
     }
   }
+  delta_tree[treeSizeA][treeSizeB] = 0.0f;
 
   ou.open(fileName);
 
@@ -244,10 +253,15 @@ void TreeComparison::init(string fileName) {
   computeSumInsAndDelCost_compressed(cB_);
 
   delta_compressed_tree = new float*[compressedTreeSizeA + 1];
-  for(int i = 0; i < compressedTreeSizeA; i++) {
+  for(int i = 0; i <= compressedTreeSizeA; i++) {
     delta_compressed_tree[i] = new float[compressedTreeSizeB + 1];
   }
-  delta_compressed_tree[compressedTreeSizeA] = new float[compressedTreeSizeB + 1];
+
+  for(int i = 0; i <= compressedTreeSizeA; i++) {
+    for(int j = 0; j <= compressedTreeSizeB; j++) {
+      delta_compressed_tree[i][j] = 0.0f;
+    }
+  }
 
   if(DEBUG) {
     ou << "CompressedTree A" << endl;
@@ -1569,8 +1583,14 @@ float TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float 
   }
 
   if(swap) {
+    cout << "compressedTreeSizeA = " << compressedTreeSizeA << ", compressedTreeSizeB = " << compressedTreeSizeB << endl;
+    cout << "treeSizeA = " << treeSizeA << ", treeSizeB = " << treeSizeB << endl;
+    cout << "delta_compressed_tree[" << b->getID() << ", " << a->getID() << "] = delta_tree[" << alpha_j << ", " << alpha_i << "]" << endl;
     delta_compressed_tree[b->getID()][a->getID()] = delta_tree[alpha_j][alpha_i];
   } else {
+    cout << "compressedTreeSizeA = " << compressedTreeSizeA << ", compressedTreeSizeB = " << compressedTreeSizeB << endl;
+    cout << "treeSizeA = " << treeSizeA << ", treeSizeB = " << treeSizeB << endl;
+    cout << "delta_compressed_tree[" << a->getID() << ", " << b->getID() << "] = delta_tree[" << alpha_i << ", " << alpha_j << "]" << endl;
     delta_compressed_tree[a->getID()][b->getID()] = delta_tree[alpha_i][alpha_j];
   }
 
@@ -1676,120 +1696,6 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
           if(DEBUG) {
             cout << "forestdist[" << a1 << ", " << b1 << "] = " << forestdist[a1][b1] << endl;
           }
-/*        int alpha_i = a1_plus_aoff_in_original_preLs[0];
-        int beta_i = a1_plus_aoff_in_original_preLs[a1_plus_aoff_in_original_preLs.size() - 1];
-        int alpha_j = b1_plus_boff_in_original_preLs[0];
-        int beta_j = b1_plus_boff_in_original_preLs[b1_plus_boff_in_original_preLs.size() - 1];
-
-
-        for(int i = beta_i + 1; i >= alpha_i; i--) {
-          if(swap) A1[i] = delta_tree[beta_j + 1][i];
-          else A1[i] = delta_tree[i][beta_j + 1];
-        }
-        for(int j = beta_j; j >= alpha_j; j--) {
-          if(swap) A2[j] = delta_tree[j][beta_i + 1];
-          else A2[j] = delta_tree[beta_i + 1][j];
-        }
-
-
-        if(swap) {
-          delta_tree[beta_j + 1][beta_i + 1] = forestdist[a1 - 1][b1 - 1];
-
-        } else {
-          delta_tree[beta_i + 1][beta_j + 1] = forestdist[a1 - 1][b1 - 1];
-
-        }
-
-
-        for(int i = a1_plus_aoff_in_original_preLs.size() - 1; i >= 0; i--) {
-          int u = a1_plus_aoff_in_original_preLs[i];
-     
-          float da = (swap? (delta_tree[beta_j + 1][u + 1] + costModel_.ins((*F)[u]->getLabel())) : (delta_tree[u + 1][beta_j + 1] + costModel_.del((*F)[u]->getLabel())));
-       
-          float min = da;
-          for(int k = 0; k < Gchildren.size(); k++) {
-            int q = Gchildren[k]->getID();
-            int q_in_original = cG->compressed_to_original[q][0];
-            float t = (swap? (delta_tree[q_in_original][u] - G->preL_to_sumDelCost[q_in_original]) : (delta_tree[u][q_in_original] - G->preL_to_sumInsCost[q_in_original]));
-   
-            if(t < min) {
-              min = t;
-            }
-          }
-          min += (swap? (G->preL_to_sumDelCost[beta_j] - costModel_.del((*G)[beta_j]->getLabel())) : (G->preL_to_sumInsCost[beta_j] - costModel_.ins((*G)[beta_j]->getLabel())));
-   
-          if(swap) {
-            delta_tree[beta_j + 1][u] = min;
-
-          } else {
-            delta_tree[u][beta_j + 1] = min;
-          }
-        }
-
-        for(int j = b1_plus_boff_in_original_preLs.size() - 1; j >= 0; j--) {
-          int v = b1_plus_boff_in_original_preLs[j];
-
-          float da = (swap? (delta_tree[v + 1][beta_i + 1] + costModel_.del((*G)[v]->getLabel())) : (delta_tree[beta_i + 1][v + 1] + costModel_.ins((*G)[v]->getLabel())));
-          float min = da;
-          for(int k = 0; k < Fchildren.size(); k++) {
-            int q = Fchildren[k]->getID();
-            int q_in_original = cF->compressed_to_original[q][0];
-            float t = (swap? (delta_tree[v][q_in_original] - F->preL_to_sumInsCost[q_in_original]) : (delta_tree[q_in_original][v] - F->preL_to_sumDelCost[q_in_original]));
-            if(t < min) {
-              min = t;
-            }
-          }
-          min += (swap? (F->preL_to_sumInsCost[beta_i] - costModel_.ins((*F)[beta_i]->getLabel())) : (F->preL_to_sumDelCost[beta_i] - costModel_.del((*F)[beta_i]->getLabel())));
-          if(swap) {
-            delta_tree[v][beta_i + 1] = min;
-          } else {
-            delta_tree[beta_i + 1][v] = min;
-          }
-        }
-
-        for(int i = a1_plus_aoff_in_original_preLs.size() - 1; i >= 0; i--) {
-          for(int j = b1_plus_boff_in_original_preLs.size() - 1; j >= 0;j--) {
-            int u = a1_plus_aoff_in_original_preLs[i];
-            int v = b1_plus_boff_in_original_preLs[j];
-            float da = (swap? (delta_tree[v][u + 1] + costModel_.ins((*F)[u]->getLabel())) : (delta_tree[u + 1][v] + costModel_.del((*F)[u]->getLabel())));
-
-            float db = (swap? (delta_tree[v + 1][u] + costModel_.del((*G)[v]->getLabel())) : (delta_tree[u][v + 1] + costModel_.ins((*G)[v]->getLabel())));
-
-            float dc = (swap? (delta_tree[v + 1][u + 1] + costModel_.ren((*G)[v]->getLabel(), (*F)[u]->getLabel())) : (delta_tree[u + 1][v + 1] + costModel_.ren((*F)[u]->getLabel(), (*G)[v]->getLabel())));
-
-            float min = da >= db ? db >= dc ? dc : db : da >= dc ? dc : da;
-
-
-            if(swap) {
-              delta_tree[v][u] = min;
-            } else {
-              delta_tree[u][v] = min;
-            }
-          }
-        }
-
-        if(swap) {
-          delta_compressed_tree[b1_plus_boff_in_compressed_preL][a1_plus_aoff_in_compressed_preL] = delta_tree[alpha_j][alpha_i];
-        } else {
-          delta_compressed_tree[a1_plus_aoff_in_compressed_preL][b1_plus_boff_in_compressed_preL] = delta_tree[alpha_i][alpha_j];
-        }
-
-        if(swap) {
-          forestdist[a1][b1] = delta_tree[alpha_j][alpha_i];
-        } else {
-          forestdist[a1][b1] = delta_tree[alpha_i][alpha_j];
-        }
-
-        for(int i = beta_i + 1; i >= alpha_i; i--) {
-          if(swap) delta_tree[beta_j + 1][i] = A1[i];
-          else delta_tree[i][beta_j + 1] = A1[i];
-        }
-        for(int j = beta_j; j >= alpha_j; j--) {
-          if(swap) delta_tree[j][beta_i + 1] = A2[j];
-          else delta_tree[beta_i + 1][j] = A2[j];
-        }
-*/
-
       } else {// forest means have computed
         cout << "9.5" << endl;
         float da = forestdist[a1 - 1][b1] + (swap? cF->preL_to_InsCost[a1_plus_aoff_in_compressed_preL] : cF->preL_to_DelCost[a1_plus_aoff_in_compressed_preL]);
