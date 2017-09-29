@@ -47,6 +47,8 @@ private:
 	float** s;
 	float** t;
 	float* q;
+	float* A1;
+    float* A2;
 
 
 	int* fn;
@@ -91,7 +93,7 @@ private:
 
 	int computeKeyRoots(Tree*, Node*, int, int*, int);
 	int computeKeyRoots_compressed(CompressedTree*, Node*, int, int*, int);
-	void treeEditDist_compressed_tree_tree(Node*, Node*, float**, bool);
+	float treeEditDist_compressed_tree_tree(Node*, Node*, float, float**, bool);
 	int computeRevKeyRoots(Tree*, Node*, int, int*, int);
 	float treeEditDist(Node*, Node*, float**, bool, bool);
 	float treeEditDist_compressed(Node*, Node*, bool);

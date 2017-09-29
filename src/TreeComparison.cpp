@@ -108,6 +108,8 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
 
   compressedTreeSizeA = cA_->getTreeSize();
   compressedTreeSizeB = cB_->getTreeSize();
+  A1 = new float[compressedTreeSizeA + 1];
+  A2 = new float[compressedTreeSizeB + 1];
 
   computeSumInsAndDelCost_compressed(cA_);
   computeSumInsAndDelCost_compressed(cB_);
@@ -234,6 +236,9 @@ void TreeComparison::init(string fileName) {
 
   compressedTreeSizeA = cA_->getTreeSize();
   compressedTreeSizeB = cB_->getTreeSize();
+
+  A1 = new float[compressedTreeSizeA + 1];
+  A2 = new float[compressedTreeSizeB + 1];
 
   computeSumInsAndDelCost_compressed(cA_);
   computeSumInsAndDelCost_compressed(cB_);
@@ -1439,9 +1444,12 @@ float TreeComparison::treeEditDist(Node* a, Node* b, float** forestdist, bool sw
   return dist;
 }
 
-void TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float** forestdist, bool swap) {
+float TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float fdist, float** forestdist, bool swap) {
   if(DEBUG) {
     ou << "TreeDistance_tree_tree(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ") swap = " << swap << endl;
+  }
+  if(DEBUG) {
+    cout << "TreeDistance_tree_tree(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ") swap = " << swap << endl;
   }
   Tree *F, *G;
   CompressedTree *cF, *cG;
@@ -1457,19 +1465,28 @@ void TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float**
     cG = cB_;
   }
 
-  int* A1 = new int[compressedTreeSizeA + 1];
-  int* A2 = new int[compressedTreeSizeB + 1];
 
-  vector<int> a1_plus_aoff_in_original_preLs = cF->compressed_to_original[a->getID()];
-  vector<int> b1_plus_boff_in_original_preLs = cG->compressed_to_original[b->getID()];
 
+  cout << "0" << endl;
+
+  vector<int> a1_plus_aoff_in_original_preLs = (*cF)(a->getID());
+  cout << "0.5" << endl;
+  vector<int> b1_plus_boff_in_original_preLs = (*cG)(b->getID());
+
+  cout << "1" << endl;
   int alpha_i = a1_plus_aoff_in_original_preLs[0];
   int beta_i = a1_plus_aoff_in_original_preLs[a1_plus_aoff_in_original_preLs.size() - 1];
   int alpha_j = b1_plus_boff_in_original_preLs[0];
   int beta_j = b1_plus_boff_in_original_preLs[b1_plus_boff_in_original_preLs.size() - 1];
 
+  cout << "2" << endl;
+
   vector<Node*> Fchildren = a->getChildren();
+
+  cout << "2.5" << endl;
   vector<Node*> Gchildren = b->getChildren();
+
+  cout << "3.5" << endl;
 
   for(int i = beta_i + 1; i >= alpha_i; i--) {
     if(swap) A1[i] = delta_tree[beta_j + 1][i];
@@ -1482,11 +1499,12 @@ void TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float**
 
 
   if(swap) {
-    delta_tree[beta_j + 1][beta_i + 1] = forestdist[a1 - 1][b1 - 1];
+    delta_tree[beta_j + 1][beta_i + 1] = fdist;
   } else {
-    delta_tree[beta_i + 1][beta_j + 1] = forestdist[a1 - 1][b1 - 1];
+    delta_tree[beta_i + 1][beta_j + 1] = fdist;
   }
 
+  cout << "4.5" << endl;
   for(int i = a1_plus_aoff_in_original_preLs.size() - 1; i >= 0; i--) {
     int u = a1_plus_aoff_in_original_preLs[i];
      
@@ -1510,6 +1528,7 @@ void TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float**
     }
   }
 
+  cout << "5.5" << endl;
   for(int j = b1_plus_boff_in_original_preLs.size() - 1; j >= 0; j--) {
     int v = b1_plus_boff_in_original_preLs[j];
 
@@ -1531,6 +1550,7 @@ void TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float**
     }
   }
 
+  cout << "6.5" << endl;
   for(int i = a1_plus_aoff_in_original_preLs.size() - 1; i >= 0; i--) {
     for(int j = b1_plus_boff_in_original_preLs.size() - 1; j >= 0;j--) {
       int u = a1_plus_aoff_in_original_preLs[i];
@@ -1549,16 +1569,12 @@ void TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float**
   }
 
   if(swap) {
-    delta_compressed_tree[b1_plus_boff_in_compressed_preL][a1_plus_aoff_in_compressed_preL] = delta_tree[alpha_j][alpha_i];
+    delta_compressed_tree[b->getID()][a->getID()] = delta_tree[alpha_j][alpha_i];
   } else {
-    delta_compressed_tree[a1_plus_aoff_in_compressed_preL][b1_plus_boff_in_compressed_preL] = delta_tree[alpha_i][alpha_j];
+    delta_compressed_tree[a->getID()][b->getID()] = delta_tree[alpha_i][alpha_j];
   }
 
-  if(swap) {
-    forestdist[a1][b1] = delta_tree[alpha_j][alpha_i];
-  } else {
-    forestdist[a1][b1] = delta_tree[alpha_i][alpha_j];
-  }
+  cout << "7.5" << endl;
 
   for(int i = beta_i + 1; i >= alpha_i; i--) {
     if(swap) delta_tree[beta_j + 1][i] = A1[i];
@@ -1567,6 +1583,19 @@ void TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float**
   for(int j = beta_j; j >= alpha_j; j--) {
     if(swap) delta_tree[j][beta_i + 1] = A2[j];
     else delta_tree[beta_i + 1][j] = A2[j];
+  }
+  cout << "8.5" << endl;
+
+  if(swap) {
+    if(DEBUG) {
+      cout << "delta_tree[" << alpha_j << ", " << alpha_i << "] = " << delta_tree[alpha_j][alpha_i] << endl;
+    }
+    return delta_tree[alpha_j][alpha_i];
+  } else {
+    if(DEBUG) {
+      cout << "delta_tree[" << alpha_i << ", " << alpha_j << "] = " << delta_tree[alpha_i][alpha_j] << endl;
+    }
+    return delta_tree[alpha_i][alpha_j];
   }
 }
 
@@ -1632,17 +1661,6 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
       int a1_plus_aoff_in_compressed_preL = cF->postL_to_preL[a1 + aoff];
       int b1_plus_boff_in_compressed_preL = cG->postL_to_preL[b1 + boff];
 
-
-      a1_plus_aoff_in_original_preLs = cF->compressed_to_original[a1_plus_aoff_in_compressed_preL];
-      b1_plus_boff_in_original_preLs = cG->compressed_to_original[b1_plus_boff_in_compressed_preL];
-
-      Node* a1_plus_aoff_in_compressed_preL_node = NULL;
-      Node* b1_plus_boff_in_compressed_preL_node = NULL;
-      a1_plus_aoff_in_compressed_preL_node = (*cF)[a1_plus_aoff_in_compressed_preL];
-      b1_plus_boff_in_compressed_preL_node = (*cG)[b1_plus_boff_in_compressed_preL];
-
-      Fchildren = a1_plus_aoff_in_compressed_preL_node->getChildren();
-      Gchildren = b1_plus_boff_in_compressed_preL_node->getChildren();
   
       // If current subforests are subtrees. 
       int a1_leftmost_leaf_in_compressed = cF->preL_to_lid[a1_plus_aoff_in_compressed_preL];
@@ -1651,7 +1669,13 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
       int b1_leftmost_leaf_in_compressed_postL = cG->preL_to_postL[b1_leftmost_leaf_in_compressed];
 
       if (a_leftmost_leaf_in_compressed_in_preL == a1_leftmost_leaf_in_compressed && b_leftmost_leaf_in_compressed_in_preL == b1_leftmost_leaf_in_compressed) {//is a tree means haven't computed
-          treeEditDist_compressed_tree_tree((*cF)[a1_plus_aoff_in_compressed_preL], (*cG)[b1_plus_boff_in_compressed_preL], forestdist, swap);   
+          if(DEBUG) {
+            cout << "a1_plus_aoff_in_compressed_preL = " << a1_plus_aoff_in_compressed_preL << ", b1_plus_boff_in_compressed_preL = " << b1_plus_boff_in_compressed_preL << endl;
+          }
+          forestdist[a1][b1] = treeEditDist_compressed_tree_tree((*cF)[a1_plus_aoff_in_compressed_preL], (*cG)[b1_plus_boff_in_compressed_preL], forestdist[a1 - 1][b1 - 1], forestdist, swap);   
+          if(DEBUG) {
+            cout << "forestdist[" << a1 << ", " << b1 << "] = " << forestdist[a1][b1] << endl;
+          }
 /*        int alpha_i = a1_plus_aoff_in_original_preLs[0];
         int beta_i = a1_plus_aoff_in_original_preLs[a1_plus_aoff_in_original_preLs.size() - 1];
         int alpha_j = b1_plus_boff_in_original_preLs[0];
@@ -1767,12 +1791,13 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
 */
 
       } else {// forest means have computed
+        cout << "9.5" << endl;
         float da = forestdist[a1 - 1][b1] + (swap? cF->preL_to_InsCost[a1_plus_aoff_in_compressed_preL] : cF->preL_to_DelCost[a1_plus_aoff_in_compressed_preL]);
-
+        cout << "10.5" << endl;
         float db = forestdist[a1][b1 - 1] + (swap? cG->preL_to_DelCost[b1_plus_boff_in_compressed_preL] : cG->preL_to_InsCost[b1_plus_boff_in_compressed_preL]);
-
+        cout << "11.5" << endl;
         float dc = forestdist[a1_leftmost_leaf_in_compressed_postL - 1 - aoff][b1_leftmost_leaf_in_compressed_postL - 1 - boff] + (swap? delta_compressed_tree[b1_plus_boff_in_compressed_preL][a1_plus_aoff_in_compressed_preL] : delta_compressed_tree[a1_plus_aoff_in_compressed_preL][b1_plus_boff_in_compressed_preL]);        
-        
+        cout << "12.5" << endl;
         float min = da >= db ? db >= dc ? dc : db : da >= dc ? dc : da;
         forestdist[a1][b1] = min;
         if(DEBUG) {

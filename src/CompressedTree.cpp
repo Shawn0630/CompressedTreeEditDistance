@@ -186,6 +186,15 @@ Node* CompressedTree::operator[](int i) {
 	return preL[i];
 };
 
+vector<int> CompressedTree::operator()(int i) {
+	if(i < 0 || i >= compressedTreeSize_) {
+		cout << "i = " << i << " compressedTreeSize_ = " << compressedTreeSize_ << endl;
+		cout << "CompressedTree Overflow" << endl;
+		return compressed_to_original[0];
+	}
+	return compressed_to_original[i];
+};
+
 vector<Node*> CompressedTree::getPreL(void) {
 	return preL;
 };

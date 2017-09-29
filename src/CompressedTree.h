@@ -9,6 +9,7 @@ public:
 	CompressedTree(Tree* );
 	int getTreeSize(void) const;
 	Node* operator[](int);
+	vector<int> operator()(int);
 
 	vector<Node*> getPreL(void);
 
