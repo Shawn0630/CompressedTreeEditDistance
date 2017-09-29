@@ -15,7 +15,7 @@ using namespace std;
 int main(int argc, char *argv[]) {
 	string fileName = "";
 	if(argc == 1) {
-		fileName = "rna17.data";
+		fileName = "rna16.data";
 		cout << "No input RNA file, use the default file(rna16.data)" << endl;
 	} else {
 		fileName = argv[1];

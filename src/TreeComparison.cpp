@@ -22,9 +22,27 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
 	treeSizeA = A_->getTreeSize();
 	treeSizeB = B_->getTreeSize();
 
+  cA_ = new CompressedTree(A_);
+  cB_ = new CompressedTree(B_);
+
+
+  compressedTreeSizeA = cA_->getTreeSize();
+  compressedTreeSizeB = cB_->getTreeSize();
+  A1 = new float[compressedTreeSizeA + 1];
+  A2 = new float[compressedTreeSizeB + 1];
+
 	int maxSize = treeSizeA < treeSizeB? treeSizeB + 1 : treeSizeA + 1;
 	fn = new int[maxSize + 1];
 	ft = new int[maxSize + 1];
+
+
+  s = new float*[maxSize - 1];
+  t = new float*[maxSize - 1];
+  q = new float[maxSize - 1];
+  for(int i = 0; i < maxSize - 1; i++) {
+    s[i] = new float[maxSize - 1];
+    t[i] = new float[maxSize - 1];
+  }
 
 
 	fn_ft_length = maxSize + 1;
@@ -74,14 +92,11 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
 
   delta_tree[treeSizeA] = new float[treeSizeB + 1];
 
+  delta_compressed_tree = new float*[compressedTreeSizeA + 1];
+  for(int i = 0; i <= compressedTreeSizeA; i++) {
+    delta_compressed_tree[i] = new float[compressedTreeSizeB + 1];
+  }
 
-	s = new float*[maxSize - 1];
-	t = new float*[maxSize - 1];
-	q = new float[maxSize - 1];
-	for(int i = 0; i < maxSize - 1; i++) {
-		s[i] = new float[maxSize - 1];
-		t[i] = new float[maxSize - 1];
-	}
 
 	for(int i = 0; i < treeSizeA; i++) {
 		for(int j = 0; j < treeSizeB; j++) {
@@ -99,19 +114,16 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
 	}
   delta_tree[treeSizeA][treeSizeB] = 0.0f;
 
+  for(int i = 0; i <= compressedTreeSizeA; i++) {
+    for(int j = 0; j <= compressedTreeSizeB; j++) {
+      delta_compressed_tree[i][j] = 0.0f;
+    }
+  }
+
 	ou.open("out.txt");
 
   computeSumInsAndDelCost(A_);
   computeSumInsAndDelCost(B_);
-
-  cA_ = new CompressedTree(A_);
-  cB_ = new CompressedTree(B_);
-
-
-  compressedTreeSizeA = cA_->getTreeSize();
-  compressedTreeSizeB = cB_->getTreeSize();
-  A1 = new float[compressedTreeSizeA + 1];
-  A2 = new float[compressedTreeSizeB + 1];
 
   computeSumInsAndDelCost_compressed(cA_);
   computeSumInsAndDelCost_compressed(cB_);
@@ -123,16 +135,6 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
     ou << cB_->toString() << endl;
   }
 
-  delta_compressed_tree = new float*[compressedTreeSizeA + 1];
-  for(int i = 0; i <= compressedTreeSizeA; i++) {
-    delta_compressed_tree[i] = new float[compressedTreeSizeB + 1];
-  }
-
-  for(int i = 0; i <= compressedTreeSizeA; i++) {
-    for(int j = 0; j <= compressedTreeSizeB; j++) {
-      delta_compressed_tree[i][j] = 0.0f;
-    }
-  }
   deltaInit();
 
 };
@@ -160,6 +162,12 @@ void TreeComparison::init(string fileName) {
   if(A_ == NULL || B_ == NULL) return;
   treeSizeA = A_->getTreeSize();
   treeSizeB = B_->getTreeSize();
+
+  cA_ = new CompressedTree(A_);
+  cB_ = new CompressedTree(B_);
+
+  compressedTreeSizeA = cA_->getTreeSize();
+  compressedTreeSizeB = cB_->getTreeSize();
 
   //map = new TreeMap(A_, B_, costModel_);
   int maxSize = treeSizeA < treeSizeB? treeSizeB + 1 : treeSizeA + 1;
@@ -190,6 +198,9 @@ void TreeComparison::init(string fileName) {
   delta_tree = new float*[treeSizeA + 1];
   hasVisited = new bool*[treeSizeA];
 
+  A1 = new float[compressedTreeSizeA + 1];
+  A2 = new float[compressedTreeSizeB + 1];
+
   for(int i = 0; i < treeSizeA; i++) {
     Free[i] = new int[treeSizeB];
     LeftA[i] = new int[treeSizeB];
@@ -219,6 +230,11 @@ void TreeComparison::init(string fileName) {
     t[i] = new float[maxSize - 1];
   }
 
+  delta_compressed_tree = new float*[compressedTreeSizeA + 1];
+  for(int i = 0; i <= compressedTreeSizeA; i++) {
+    delta_compressed_tree[i] = new float[compressedTreeSizeB + 1];
+  }
+
   for(int i = 0; i < treeSizeA; i++) {
     for(int j = 0; j < treeSizeB; j++) {
       Free[i][j] = -1;
@@ -235,33 +251,19 @@ void TreeComparison::init(string fileName) {
   }
   delta_tree[treeSizeA][treeSizeB] = 0.0f;
 
-  ou.open(fileName);
-
-  computeSumInsAndDelCost(A_);
-  computeSumInsAndDelCost(B_);
-
-  cA_ = new CompressedTree(A_);
-  cB_ = new CompressedTree(B_);
-
-  compressedTreeSizeA = cA_->getTreeSize();
-  compressedTreeSizeB = cB_->getTreeSize();
-
-  A1 = new float[compressedTreeSizeA + 1];
-  A2 = new float[compressedTreeSizeB + 1];
-
-  computeSumInsAndDelCost_compressed(cA_);
-  computeSumInsAndDelCost_compressed(cB_);
-
-  delta_compressed_tree = new float*[compressedTreeSizeA + 1];
-  for(int i = 0; i <= compressedTreeSizeA; i++) {
-    delta_compressed_tree[i] = new float[compressedTreeSizeB + 1];
-  }
-
   for(int i = 0; i <= compressedTreeSizeA; i++) {
     for(int j = 0; j <= compressedTreeSizeB; j++) {
       delta_compressed_tree[i][j] = 0.0f;
     }
   }
+
+  ou.open(fileName);
+
+  computeSumInsAndDelCost(A_);
+  computeSumInsAndDelCost(B_);
+
+  computeSumInsAndDelCost_compressed(cA_);
+  computeSumInsAndDelCost_compressed(cB_);
 
   if(DEBUG) {
     ou << "CompressedTree A" << endl;
@@ -308,6 +310,7 @@ void TreeComparison::deltaInit() {
   for(int i = 0; i < compressedTreeSizeA; i++) {
     delta_compressed_tree[i][compressedTreeSizeB] = cA_->preL_to_sumDelCost[i];
   }
+
 };
 
 
@@ -1479,28 +1482,19 @@ float TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float 
     cG = cB_;
   }
 
-
-
-  cout << "0" << endl;
-
   vector<int> a1_plus_aoff_in_original_preLs = (*cF)(a->getID());
-  cout << "0.5" << endl;
   vector<int> b1_plus_boff_in_original_preLs = (*cG)(b->getID());
 
-  cout << "1" << endl;
   int alpha_i = a1_plus_aoff_in_original_preLs[0];
   int beta_i = a1_plus_aoff_in_original_preLs[a1_plus_aoff_in_original_preLs.size() - 1];
   int alpha_j = b1_plus_boff_in_original_preLs[0];
   int beta_j = b1_plus_boff_in_original_preLs[b1_plus_boff_in_original_preLs.size() - 1];
 
-  cout << "2" << endl;
 
   vector<Node*> Fchildren = a->getChildren();
 
-  cout << "2.5" << endl;
   vector<Node*> Gchildren = b->getChildren();
 
-  cout << "3.5" << endl;
 
   for(int i = beta_i + 1; i >= alpha_i; i--) {
     if(swap) A1[i] = delta_tree[beta_j + 1][i];
@@ -1518,7 +1512,6 @@ float TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float 
     delta_tree[beta_i + 1][beta_j + 1] = fdist;
   }
 
-  cout << "4.5" << endl;
   for(int i = a1_plus_aoff_in_original_preLs.size() - 1; i >= 0; i--) {
     int u = a1_plus_aoff_in_original_preLs[i];
      
@@ -1542,7 +1535,6 @@ float TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float 
     }
   }
 
-  cout << "5.5" << endl;
   for(int j = b1_plus_boff_in_original_preLs.size() - 1; j >= 0; j--) {
     int v = b1_plus_boff_in_original_preLs[j];
 
@@ -1564,7 +1556,6 @@ float TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float 
     }
   }
 
-  cout << "6.5" << endl;
   for(int i = a1_plus_aoff_in_original_preLs.size() - 1; i >= 0; i--) {
     for(int j = b1_plus_boff_in_original_preLs.size() - 1; j >= 0;j--) {
       int u = a1_plus_aoff_in_original_preLs[i];
@@ -1583,18 +1574,10 @@ float TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float 
   }
 
   if(swap) {
-    cout << "compressedTreeSizeA = " << compressedTreeSizeA << ", compressedTreeSizeB = " << compressedTreeSizeB << endl;
-    cout << "treeSizeA = " << treeSizeA << ", treeSizeB = " << treeSizeB << endl;
-    cout << "delta_compressed_tree[" << b->getID() << ", " << a->getID() << "] = delta_tree[" << alpha_j << ", " << alpha_i << "]" << endl;
     delta_compressed_tree[b->getID()][a->getID()] = delta_tree[alpha_j][alpha_i];
   } else {
-    cout << "compressedTreeSizeA = " << compressedTreeSizeA << ", compressedTreeSizeB = " << compressedTreeSizeB << endl;
-    cout << "treeSizeA = " << treeSizeA << ", treeSizeB = " << treeSizeB << endl;
-    cout << "delta_compressed_tree[" << a->getID() << ", " << b->getID() << "] = delta_tree[" << alpha_i << ", " << alpha_j << "]" << endl;
     delta_compressed_tree[a->getID()][b->getID()] = delta_tree[alpha_i][alpha_j];
   }
-
-  cout << "7.5" << endl;
 
   for(int i = beta_i + 1; i >= alpha_i; i--) {
     if(swap) delta_tree[beta_j + 1][i] = A1[i];
@@ -1604,7 +1587,6 @@ float TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float 
     if(swap) delta_tree[j][beta_i + 1] = A2[j];
     else delta_tree[beta_i + 1][j] = A2[j];
   }
-  cout << "8.5" << endl;
 
   if(swap) {
     if(DEBUG) {
@@ -1697,13 +1679,9 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
             cout << "forestdist[" << a1 << ", " << b1 << "] = " << forestdist[a1][b1] << endl;
           }
       } else {// forest means have computed
-        cout << "9.5" << endl;
         float da = forestdist[a1 - 1][b1] + (swap? cF->preL_to_InsCost[a1_plus_aoff_in_compressed_preL] : cF->preL_to_DelCost[a1_plus_aoff_in_compressed_preL]);
-        cout << "10.5" << endl;
         float db = forestdist[a1][b1 - 1] + (swap? cG->preL_to_DelCost[b1_plus_boff_in_compressed_preL] : cG->preL_to_InsCost[b1_plus_boff_in_compressed_preL]);
-        cout << "11.5" << endl;
         float dc = forestdist[a1_leftmost_leaf_in_compressed_postL - 1 - aoff][b1_leftmost_leaf_in_compressed_postL - 1 - boff] + (swap? delta_compressed_tree[b1_plus_boff_in_compressed_preL][a1_plus_aoff_in_compressed_preL] : delta_compressed_tree[a1_plus_aoff_in_compressed_preL][b1_plus_boff_in_compressed_preL]);        
-        cout << "12.5" << endl;
         float min = da >= db ? db >= dc ? dc : db : da >= dc ? dc : da;
         forestdist[a1][b1] = min;
         if(DEBUG) {
@@ -1723,9 +1701,9 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
 // postR all the trees on the right have already computed
 // add left and delete left
 float TreeComparison::revTreeEditDist(Node* a, Node* b, float** forestdist, bool swap, bool mark) {
-  if(DEBUG) {
+/*  if(DEBUG) {
     ou << "RevTreeDistance(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ") swap = " << swap << endl;
-  }
+  }*/
   Tree *F, *G;
   if(swap) {
     F = B_;
@@ -1743,10 +1721,10 @@ float TreeComparison::revTreeEditDist(Node* a, Node* b, float** forestdist, bool
 
   int a_rightmost_leaf_in_preL = F->preL_to_rid[a_in_preL];
   int b_rightmost_leaf_in_preL = G->preL_to_rid[b_in_preL];
-  if(DEBUG) {
+/*  if(DEBUG) {
     ou << "a_rightmost_leaf_in_preL = " << a_rightmost_leaf_in_preL << endl;
     ou << "b_rightmost_leaf_in_preL = " << b_rightmost_leaf_in_preL << endl;
-  }
+  }*/
 
   int a_rightmost_leaf_in_postR = F->preL_to_postR[a_rightmost_leaf_in_preL];
   int b_rightmost_leaf_in_postR = G->preL_to_postR[b_rightmost_leaf_in_preL];
@@ -1855,10 +1833,10 @@ float TreeComparison::revTreeEditDist(Node* a, Node* b, float** forestdist, bool
         ou << "dc = " << to_string(dc) << endl;
       }*/
       forestdist[a1][b1] = da >= db ? db >= dc ? dc : db : da >= dc ? dc : da;
-      if(DEBUG) {
+/*      if(DEBUG) {
         ou << "(" << a1_preL << ", " << F->preL_to_preR[a_rightmost_leaf_in_preL] << ", " << b1_preL << ", " << G->preL_to_preR[b_rightmost_leaf_in_preL] << ")" << endl;
         ou << "forestdist[" << a1 << ", " << b1 << "] = " << forestdist[a1][b1] << endl;
-      }
+      }*/
       dist = forestdist[a1][b1];
     }
   }
@@ -1924,13 +1902,13 @@ float TreeComparison::spfA(Node* a, Node* b, int leaf, int pathType, bool swap) 
 			hasRightPart = false;
 		}
 
-    if(DEBUG) {
+/*    if(DEBUG) {
       ou << "spfA(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ") " << swap << " " << endl;
     }
 
     if(DEBUG) {
       cout << "spfA(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ") " << swap << " " << endl;
-    }
+    }*/
 
 
     // right path left decomposition
@@ -4777,7 +4755,7 @@ void TreeComparison::strategyComputation() {
 
 	free(preA[0], preB[0]);
 	//Strategy** S = APTED_ComputeOptStrategy_postL();
-	if(DEBUG) {
+/*	if(DEBUG) {
 		ou << "RESULT" << endl;
 		for(int i = 0; i < treeSizeA; i++) {
 			for(int j = 0; j < treeSizeB; j++) {
@@ -4792,7 +4770,7 @@ void TreeComparison::strategyComputation() {
 
 
 
-	/*	ou << "RESULT 2" << endl;
+		ou << "RESULT 2" << endl;
 
 		for(int i = 0; i < treeSizeA; i++) {
 			for(int j = 0; j < treeSizeB; j++) {
@@ -4803,7 +4781,7 @@ void TreeComparison::strategyComputation() {
 				}
 			}
 			ou << endl;
-		}*/
+		}
 
     ou << "Free" << endl;
     for(int i = 0; i < treeSizeA; i++) {
@@ -4869,7 +4847,7 @@ void TreeComparison::strategyComputation() {
     }
     ou << endl;
 
-	}
+	}*/
 };
 
 void TreeComparison::strategyComputation_compressed() {
@@ -4878,7 +4856,7 @@ void TreeComparison::strategyComputation_compressed() {
 
   free(preA[0], preB[0]);
   //Strategy** S = APTED_ComputeOptStrategy_postL();
-  if(DEBUG) {
+/*  if(DEBUG) {
     ou << "RESULT" << endl;
     for(int i = 0; i < compressedTreeSizeA; i++) {
       for(int j = 0; j < compressedTreeSizeB; j++) {
@@ -4893,7 +4871,7 @@ void TreeComparison::strategyComputation_compressed() {
 
 
 
-  /*  ou << "RESULT 2" << endl;
+    ou << "RESULT 2" << endl;
 
     for(int i = 0; i < treeSizeA; i++) {
       for(int j = 0; j < treeSizeB; j++) {
@@ -4904,7 +4882,7 @@ void TreeComparison::strategyComputation_compressed() {
         }
       }
       ou << endl;
-    }*/
+    }
 
     ou << "Free" << endl;
     for(int i = 0; i < compressedTreeSizeA; i++) {
@@ -4970,7 +4948,7 @@ void TreeComparison::strategyComputation_compressed() {
     }
     ou << endl;
 
-  }
+  }*/
 };
 
 
@@ -5147,10 +5125,10 @@ int TreeComparison::free(Node* a, Node* b) {
     freeS.setTreeToDecompose(0);
     freeS.setKeyNode(a->getID());
     freeS.setLeaf(a->getID());
-		if(DEBUG) {
+/*		if(DEBUG) {
 			ou << "Compute Free(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ")" << endl;
 			ou << "If select " << to_string(a->getID()) << " in Tree A #Subproblem: " << to_string(min) << " Direction: Left";
-		}
+		}*/
 	}
 	if(childrenB.empty()) {
 		//int left = a->getRightmostForestNum();
@@ -5175,10 +5153,10 @@ int TreeComparison::free(Node* a, Node* b) {
     freeS.setTreeToDecompose(1);
     freeS.setKeyNode(b->getID());
     freeS.setLeaf(b->getID());
-		if(DEBUG) {
+/*		if(DEBUG) {
 			ou << "Compute Free(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ")" << endl;
 			ou << "If select " << to_string(b->getID()) << " in Tree B #Subproblem: " << to_string(min) << " Direction: Left";
-		}
+		}*/
 	} 
 
 	int prev = 0;
@@ -5198,16 +5176,16 @@ int TreeComparison::free(Node* a, Node* b) {
 		}
 	}
 
-  if(DEBUG) {
+/*  if(DEBUG) {
     ou << "free[" << a->getID() << "][" << b->getID() << "] freeSumA = " << freeSumA << " freeSumB = " << freeSumB << endl;
-  }
+  }*/
 
 	if(!childrenA.empty()) {
 		int aleftmost = freeSumA - free(childrenA[0], b) + leftA(childrenA[0], b) + b->getLeftmostForestNum() * (a->getSubTreeSize() - childrenA[0]->getSubTreeSize());
-		if(DEBUG) {
+/*		if(DEBUG) {
 			ou << "Compute Free(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ")" << endl;
 			ou << "If select " << to_string(childrenA[0]->getID()) << "(leftmost) in Tree A #Subproblem: " << to_string(aleftmost) << " Direction: Right" << endl;
-		}
+		}*/
 		if(min > aleftmost) {
 			min = aleftmost;
 			freeS.setKeyNode(childrenA[0]->getID());
@@ -5241,21 +5219,21 @@ int TreeComparison::free(Node* a, Node* b) {
 				if(left > right)freeS.setDirection(0);
 				else freeS.setDirection(1);
 			}
-			if(DEBUG) {
+/*			if(DEBUG) {
 				ou << "Compute Free(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ")" << endl;
 				ou << "If select " << to_string(childrenA[i]->getID()) << " in Tree A #Subproblem: " << to_string(sum) << " Direction: ";
 				if(left > right) ou << "Right" << endl;
 				else ou << "Left" << endl;
-			}
+			}*/
 		}
 		int arightmost = freeSumA - free(childrenA[childrenA.size() - 1], b) + rightA(childrenA[childrenA.size() - 1], b) + b->getRightmostForestNum() * (a->getSubTreeSize() - childrenA[childrenA.size() - 1]->getSubTreeSize());
 		/*if(DEBUG) {
       ou << "arightmost = " << arightmost << endl;
     }*/
-    if(DEBUG) {
+/*    if(DEBUG) {
 			ou << "Compute Free(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ")" << endl;
 			ou << "If select " << to_string(childrenA[childrenA.size() - 1]->getID()) << "(rightmost) in Tree A #Subproblem: " << to_string(arightmost) << " Direction: Left" << endl;
-		}
+		}*/
 		if(min > arightmost) {
 			min = arightmost;
 			freeS.setKeyNode(childrenA[childrenA.size() - 1]->getID());
@@ -5267,10 +5245,10 @@ int TreeComparison::free(Node* a, Node* b) {
 
 	if(!childrenB.empty()) {
 		int bleftmost = freeSumB - free(a, childrenB[0]) + leftB(a, childrenB[0]) + a->getLeftmostForestNum() * (b->getSubTreeSize() - childrenB[0]->getSubTreeSize());
-		if(DEBUG) {
+/*		if(DEBUG) {
 			ou << "Compute Free(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ")" << endl;
 			ou << "If select " << to_string(childrenB[0]->getID()) << "(leftmost) in Tree B #Subproblem: " << to_string(bleftmost) << " Direction: Right" << endl;
-		}
+		}*/
 		if(min > bleftmost) {
 			min = bleftmost;
 			freeS.setKeyNode(childrenB[0]->getID());
@@ -5303,22 +5281,22 @@ int TreeComparison::free(Node* a, Node* b) {
 				if(left > right)freeS.setDirection(0);
 				else freeS.setDirection(1);
 			}
-			if(DEBUG) {
+/*			if(DEBUG) {
 				ou << "Compute Free(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ")" << endl;
 				ou << "If select " << to_string(childrenB[i]->getID()) << " in Tree B #Subproblem: " << to_string(sum) << " Direction: ";
 				if(left > right) ou << "Right" << endl;
 				else ou << "Left" << endl;
-			}
+			}*/
 		}
 
 		int brightmost = freeSumB - free(a, childrenB[childrenB.size() - 1]) + rightB(a, childrenB[childrenB.size() - 1]) + a->getRightmostForestNum() * (b->getSubTreeSize() - childrenB[childrenB.size() - 1]->getSubTreeSize());
 		/*if(DEBUG) {
       ou << "brightmost = " << brightmost << endl;
     }*/
-    if(DEBUG) {
+/*    if(DEBUG) {
 			ou << "Compute Free(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ")" << endl;
 			ou << "If select " << to_string(childrenB[childrenB.size() - 1]->getID()) << "(rightmost) in Tree B #Subproblem: " << to_string(brightmost) << " Direction: Left" << endl;
-		}
+		}*/
 		if(min > brightmost) {
 			min = brightmost;
 			freeS.setKeyNode(childrenB[childrenB.size() - 1]->getID());
@@ -5328,14 +5306,14 @@ int TreeComparison::free(Node* a, Node* b) {
 		}
 	}
 	Free[a->getID()][b->getID()] = min;
-  if(DEBUG) {
+/*  if(DEBUG) {
     ou << "Free[" << a->getID() << "][" << b->getID() << "] = " << Free[a->getID()][b->getID()] << endl;
-  }
+  }*/
 	FreeStrategies[a->getID()][b->getID()] = freeS;
-	if(DEBUG) {
+/*	if(DEBUG) {
 		ou << "FreeS(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ")" << endl;
 		ou << FreeStrategies[a->getID()][b->getID()].toString() << endl;
-	}
+	}*/
 	return min;
 };
 
@@ -5701,14 +5679,14 @@ TreeMap* TreeComparison::getTreeMap(void) {
 void TreeComparison::gteo_LL(Node* a, Node* b) {
   Tree *F = A_;
   Tree *G = B_;
-  if(DEBUG) {
+/*  if(DEBUG) {
     ou << "gteo_LL(" << a->getID() << ", " << b->getID() << ")" << endl;
-  }
+  }*/
 
   if(a->getSubTreeSize() == 1 || b->getSubTreeSize() == 1) {
     F = A_;
     G = B_;
-    ou << "spf1" << endl;
+/*    ou << "spf1" << endl;*/
     float min = FLT_MAX;
     int from = 0;
     int to = 0;
@@ -5753,7 +5731,7 @@ void TreeComparison::gteo_LL(Node* a, Node* b) {
   int aoff = a_leftmost_leaf_in_postL - 1;//consider gap
   int boff = b_leftmost_leaf_in_postL - 1;//consider gap
 
-  if(DEBUG) {
+/*  if(DEBUG) {
     ou << "forestdist" << endl;
     for(int i = 0; i < a->getSubTreeSize() + 1; i++) {
       for(int j = 0; j < b->getSubTreeSize() + 1; j++) {
@@ -5761,7 +5739,7 @@ void TreeComparison::gteo_LL(Node* a, Node* b) {
       }
       ou << endl;
     } 
-  }
+  }*/
 
   int i = F->preL_to_postL[a->getID()] - aoff;
   int j = G->preL_to_postL[b->getID()] - boff;
@@ -5788,7 +5766,7 @@ void TreeComparison::gteo_LL(Node* a, Node* b) {
     int size_of_j_minus1_in_preL = (*G)[j_minus1_in_preL]->getSubTreeSize();
     float dc = forestdist[i - size_of_i_minus1_in_preL][j - size_of_j_minus1_in_preL] + delta[i_minus1_in_preL][j_minus1_in_preL] + costModel_.ren((*F)[i_minus1_in_preL]->getLabel(), (*G)[j_minus1_in_preL]->getLabel());
        
-    if(DEBUG) {
+/*    if(DEBUG) {
       ou << "i = " << i_minus1_in_preL << " j = " << j_minus1_in_preL << endl;
       ou << "FcurrentForestSize = " << FcurrentForestSize << ", " << "GcurrentForestSize = " << GcurrentForestSize << endl;
     }
@@ -5799,7 +5777,7 @@ void TreeComparison::gteo_LL(Node* a, Node* b) {
       ou << "forestdist[" << i << ", " << j - 1 << "] = " << forestdist[i][j - 1] << endl;
       ou << "forestdist[" << i - size_of_i_minus1_in_preL << ", " << j - size_of_j_minus1_in_preL << "] = " << forestdist[i - size_of_i_minus1_in_preL][j - size_of_j_minus1_in_preL] << endl;
       ou << "forestdist[" << i << ", " << j << "] = " << forestdist[i][j] << endl;    
-    }
+    }*/
     if(da == forestdist[i][j]) {
       if(DEBUG) {
         ou << (*F)[i_minus1_in_preL]->getLabel() << "(" << i_minus1_in_preL << ")" << " -> -" << endl;
@@ -5808,16 +5786,16 @@ void TreeComparison::gteo_LL(Node* a, Node* b) {
       i = i - 1;
       FcurrentForestSize--;
     } else if(db == forestdist[i][j]) {
-      if(DEBUG) {
+/*      if(DEBUG) {
         ou << "- -> " << (*G)[j_minus1_in_preL] << "(" << j_minus1_in_preL << ")" << endl;
-      }
+      }*/
       map->setMap(-1, j_minus1_in_preL);
       j = j - 1;
       GcurrentForestSize--;
     } else if(dc == forestdist[i][j]) {
-      if(DEBUG) {
+/*      if(DEBUG) {
         ou << (*F)[i_minus1_in_preL]->getLabel() << "(" << i_minus1_in_preL << ") -> " << (*G)[j_minus1_in_preL]->getLabel() << "(" << j_minus1_in_preL << ")" << endl;
-      }
+      }*/
       map->setMap(i_minus1_in_preL, j_minus1_in_preL);
       if(isFTree && isGTree) {
         i = i - 1;
@@ -5836,18 +5814,18 @@ void TreeComparison::gteo_LL(Node* a, Node* b) {
     }
   }
   while(FcurrentForestSize > 0) {
-    if(DEBUG) {
+/*    if(DEBUG) {
       ou << "i = " << i << " j = 0" << endl;
-    } 
+    } */
     int i_minus1_in_preL = F->postL_to_preL[i - 1];
     map->setMap(i_minus1_in_preL, -1);
     i = i - 1;
     FcurrentForestSize--;
   }
   while(GcurrentForestSize > 0) {
-    if(DEBUG) {
+/*    if(DEBUG) {
       ou << "i = 0 j = " << j << endl;
-    }
+    }*/
     int j_minus1_in_preL = G->postL_to_preL[j - 1];
     map->setMap(-1, j_minus1_in_preL);
     j = j - 1;

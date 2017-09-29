@@ -20,3 +20,5 @@ AAGGUCAAGAGGGGACACCCCGGUGUCCCUGCGCGGAUGUUCGAGGGCUGCUCGCCCGAGUCCGCGGGUAGACCGC---A
 
 The distance_ND(For debug use) is 44 #Subproblem: 21190
 The distance(LL)(For debug use) is 44 #Subproblem: 28208
+The distance(LL_compressed)(For debug use) is 44 #Subproblem: 12430
+The distance(RR)(For debug use) is 44 #Subproblem: 25110
