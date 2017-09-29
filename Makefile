@@ -30,7 +30,7 @@ PROGRAM      = TreeEditDistance
 
 # The source files directories (do not include last '/').
 # If not specified, only the current directory will be searched.
-SRC_DIRS     = src test
+SRC_DIRS     = src main
 
 # Header file directories (do not include last '/').
 INCLUDE_DIRS = 
@@ -71,7 +71,7 @@ CC           = gcc
 CXX          = g++
 
 # The pre-processor and compiler options for C programs.
-CFLAGS       = -g3 -O2 -c -g -std=c++11 #-pg 
+CFLAGS       = -g3 -O0 -c -g -std=c++11 #-pg 
 
 # The pre-processor and compiler options for C++ programs.
 CXXFLAGS     = $(CFLAGS) 
@@ -80,7 +80,7 @@ CXXFLAGS     = $(CFLAGS)
 GTESTLIBS = -lgtest -lgtest_main -lpthread
 
 # The linker options for C programs.
-CLDFLAGS     = -g3 -O2 #-pg
+CLDFLAGS     = -g3 -O0 #-pg
 
 # The linker options for C++ programs.
 CXXLDFLAGS   = $(CLDFLAGS)

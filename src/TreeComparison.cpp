@@ -1439,6 +1439,137 @@ float TreeComparison::treeEditDist(Node* a, Node* b, float** forestdist, bool sw
   return dist;
 }
 
+void TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float** forestdist, bool swap) {
+  if(DEBUG) {
+    ou << "TreeDistance_tree_tree(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ") swap = " << swap << endl;
+  }
+  Tree *F, *G;
+  CompressedTree *cF, *cG;
+  if(swap) {
+    F = B_;
+    cF = cB_;
+    G = A_;
+    cG = cA_;
+  } else {
+    F = A_;
+    cF = cA_;
+    G = B_;
+    cG = cB_;
+  }
+
+  int* A1 = new int[compressedTreeSizeA + 1];
+  int* A2 = new int[compressedTreeSizeB + 1];
+
+  vector<int> a1_plus_aoff_in_original_preLs = cF->compressed_to_original[a->getID()];
+  vector<int> b1_plus_boff_in_original_preLs = cG->compressed_to_original[b->getID()];
+
+  int alpha_i = a1_plus_aoff_in_original_preLs[0];
+  int beta_i = a1_plus_aoff_in_original_preLs[a1_plus_aoff_in_original_preLs.size() - 1];
+  int alpha_j = b1_plus_boff_in_original_preLs[0];
+  int beta_j = b1_plus_boff_in_original_preLs[b1_plus_boff_in_original_preLs.size() - 1];
+
+  vector<Node*> Fchildren = a->getChildren();
+  vector<Node*> Gchildren = b->getChildren();
+
+  for(int i = beta_i + 1; i >= alpha_i; i--) {
+    if(swap) A1[i] = delta_tree[beta_j + 1][i];
+    else A1[i] = delta_tree[i][beta_j + 1];
+  }
+  for(int j = beta_j; j >= alpha_j; j--) {
+    if(swap) A2[j] = delta_tree[j][beta_i + 1];
+    else A2[j] = delta_tree[beta_i + 1][j];
+  }
+
+
+  if(swap) {
+    delta_tree[beta_j + 1][beta_i + 1] = forestdist[a1 - 1][b1 - 1];
+  } else {
+    delta_tree[beta_i + 1][beta_j + 1] = forestdist[a1 - 1][b1 - 1];
+  }
+
+  for(int i = a1_plus_aoff_in_original_preLs.size() - 1; i >= 0; i--) {
+    int u = a1_plus_aoff_in_original_preLs[i];
+     
+    float da = (swap? (delta_tree[beta_j + 1][u + 1] + costModel_.ins((*F)[u]->getLabel())) : (delta_tree[u + 1][beta_j + 1] + costModel_.del((*F)[u]->getLabel())));
+
+    float min = da;
+    for(int k = 0; k < Gchildren.size(); k++) {
+      int q = Gchildren[k]->getID();
+      int q_in_original = cG->compressed_to_original[q][0];
+      float t = (swap? (delta_tree[q_in_original][u] - G->preL_to_sumDelCost[q_in_original]) : (delta_tree[u][q_in_original] - G->preL_to_sumInsCost[q_in_original]));
+      if(t < min) {
+        min = t;
+      }
+    }
+    min += (swap? (G->preL_to_sumDelCost[beta_j] - costModel_.del((*G)[beta_j]->getLabel())) : (G->preL_to_sumInsCost[beta_j] - costModel_.ins((*G)[beta_j]->getLabel())));
+   
+    if(swap) {
+      delta_tree[beta_j + 1][u] = min;
+    } else {
+      delta_tree[u][beta_j + 1] = min;
+    }
+  }
+
+  for(int j = b1_plus_boff_in_original_preLs.size() - 1; j >= 0; j--) {
+    int v = b1_plus_boff_in_original_preLs[j];
+
+    float da = (swap? (delta_tree[v + 1][beta_i + 1] + costModel_.del((*G)[v]->getLabel())) : (delta_tree[beta_i + 1][v + 1] + costModel_.ins((*G)[v]->getLabel())));
+    float min = da;
+    for(int k = 0; k < Fchildren.size(); k++) {
+      int q = Fchildren[k]->getID();
+      int q_in_original = cF->compressed_to_original[q][0];
+      float t = (swap? (delta_tree[v][q_in_original] - F->preL_to_sumInsCost[q_in_original]) : (delta_tree[q_in_original][v] - F->preL_to_sumDelCost[q_in_original]));
+      if(t < min) {
+        min = t;
+      }
+    }
+    min += (swap? (F->preL_to_sumInsCost[beta_i] - costModel_.ins((*F)[beta_i]->getLabel())) : (F->preL_to_sumDelCost[beta_i] - costModel_.del((*F)[beta_i]->getLabel())));
+    if(swap) {
+      delta_tree[v][beta_i + 1] = min;
+    } else {
+      delta_tree[beta_i + 1][v] = min;     
+    }
+  }
+
+  for(int i = a1_plus_aoff_in_original_preLs.size() - 1; i >= 0; i--) {
+    for(int j = b1_plus_boff_in_original_preLs.size() - 1; j >= 0;j--) {
+      int u = a1_plus_aoff_in_original_preLs[i];
+      int v = b1_plus_boff_in_original_preLs[j];
+      float da = (swap? (delta_tree[v][u + 1] + costModel_.ins((*F)[u]->getLabel())) : (delta_tree[u + 1][v] + costModel_.del((*F)[u]->getLabel())));
+      float db = (swap? (delta_tree[v + 1][u] + costModel_.del((*G)[v]->getLabel())) : (delta_tree[u][v + 1] + costModel_.ins((*G)[v]->getLabel())));
+      float dc = (swap? (delta_tree[v + 1][u + 1] + costModel_.ren((*G)[v]->getLabel(), (*F)[u]->getLabel())) : (delta_tree[u + 1][v + 1] + costModel_.ren((*F)[u]->getLabel(), (*G)[v]->getLabel())));
+      float min = da >= db ? db >= dc ? dc : db : da >= dc ? dc : da;
+
+      if(swap) {
+        delta_tree[v][u] = min;
+      } else {
+        delta_tree[u][v] = min;
+      }
+    }
+  }
+
+  if(swap) {
+    delta_compressed_tree[b1_plus_boff_in_compressed_preL][a1_plus_aoff_in_compressed_preL] = delta_tree[alpha_j][alpha_i];
+  } else {
+    delta_compressed_tree[a1_plus_aoff_in_compressed_preL][b1_plus_boff_in_compressed_preL] = delta_tree[alpha_i][alpha_j];
+  }
+
+  if(swap) {
+    forestdist[a1][b1] = delta_tree[alpha_j][alpha_i];
+  } else {
+    forestdist[a1][b1] = delta_tree[alpha_i][alpha_j];
+  }
+
+  for(int i = beta_i + 1; i >= alpha_i; i--) {
+    if(swap) delta_tree[beta_j + 1][i] = A1[i];
+    else delta_tree[i][beta_j + 1] = A1[i];
+  }
+  for(int j = beta_j; j >= alpha_j; j--) {
+    if(swap) delta_tree[j][beta_i + 1] = A2[j];
+    else delta_tree[beta_i + 1][j] = A2[j];
+  }
+}
+
 float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
 
   if(DEBUG) {
@@ -1479,10 +1610,6 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
   int aoff = a_leftmost_leaf_in_compressed_in_postL - 1;//not tree-tree distance but tree-tree remove the root
   int boff = b_leftmost_leaf_in_compressed_in_postL - 1;//not tree-tree distance but tree-tree remove the root
 
-
-  float da = 0;
-  float db = 0;
-  float dc = 0;
   float dist = 0;
 
   forestdist[0][0] = 0;
@@ -1496,18 +1623,26 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
     forestdist[0][b1] = forestdist[0][b1 - 1] + (swap ? cG->preL_to_DelCost[b1_plus_boff_in_preL] : cG->preL_to_InsCost[b1_plus_boff_in_preL]); // USE COST MODEL - insert b1.
   }
 
+
+
   // Fill in the remaining costs.
   for (int a1 = 1; a1 <= a_in_compressed_in_postL - aoff; a1++) {
     for (int b1 = 1; b1 <= b_in_compressed_in_postL - boff; b1++) {
       counter++;
       int a1_plus_aoff_in_compressed_preL = cF->postL_to_preL[a1 + aoff];
       int b1_plus_boff_in_compressed_preL = cG->postL_to_preL[b1 + boff];
-      if(DEBUG) {
-        ou << "compute forestdist(" << a1_plus_aoff_in_compressed_preL << ", " << b1_plus_boff_in_compressed_preL << ")" << endl;
-      }
 
-      vector<int> a1_plus_aoff_in_original_preLs = cF->compressed_to_original[a1_plus_aoff_in_compressed_preL];
-      vector<int> b1_plus_boff_in_original_preLs = cG->compressed_to_original[b1_plus_boff_in_compressed_preL];
+
+      a1_plus_aoff_in_original_preLs = cF->compressed_to_original[a1_plus_aoff_in_compressed_preL];
+      b1_plus_boff_in_original_preLs = cG->compressed_to_original[b1_plus_boff_in_compressed_preL];
+
+      Node* a1_plus_aoff_in_compressed_preL_node = NULL;
+      Node* b1_plus_boff_in_compressed_preL_node = NULL;
+      a1_plus_aoff_in_compressed_preL_node = (*cF)[a1_plus_aoff_in_compressed_preL];
+      b1_plus_boff_in_compressed_preL_node = (*cG)[b1_plus_boff_in_compressed_preL];
+
+      Fchildren = a1_plus_aoff_in_compressed_preL_node->getChildren();
+      Gchildren = b1_plus_boff_in_compressed_preL_node->getChildren();
   
       // If current subforests are subtrees. 
       int a1_leftmost_leaf_in_compressed = cF->preL_to_lid[a1_plus_aoff_in_compressed_preL];
@@ -1515,17 +1650,14 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
       int a1_leftmost_leaf_in_compressed_postL = cF->preL_to_postL[a1_leftmost_leaf_in_compressed];
       int b1_leftmost_leaf_in_compressed_postL = cG->preL_to_postL[b1_leftmost_leaf_in_compressed];
 
-      if (a_leftmost_leaf_in_compressed_in_preL == a1_leftmost_leaf_in_compressed && b_leftmost_leaf_in_compressed_in_preL == b1_leftmost_leaf_in_compressed) {//is a tree means haven't computed     
-        int alpha_i = a1_plus_aoff_in_original_preLs[0];
+      if (a_leftmost_leaf_in_compressed_in_preL == a1_leftmost_leaf_in_compressed && b_leftmost_leaf_in_compressed_in_preL == b1_leftmost_leaf_in_compressed) {//is a tree means haven't computed
+          treeEditDist_compressed_tree_tree((*cF)[a1_plus_aoff_in_compressed_preL], (*cG)[b1_plus_boff_in_compressed_preL], forestdist, swap);   
+/*        int alpha_i = a1_plus_aoff_in_original_preLs[0];
         int beta_i = a1_plus_aoff_in_original_preLs[a1_plus_aoff_in_original_preLs.size() - 1];
         int alpha_j = b1_plus_boff_in_original_preLs[0];
         int beta_j = b1_plus_boff_in_original_preLs[b1_plus_boff_in_original_preLs.size() - 1];
-/*        if(DEBUG) {
-          ou << "alpha_i = " << alpha_i << ", beta_i = " << beta_i << ", alpha_j = " << alpha_j << ", beta_j = " << beta_j << endl;
-        }*/
 
-        int* A1 = new int[compressedTreeSizeA + 1];
-        int* A2 = new int[compressedTreeSizeB + 1];
+
         for(int i = beta_i + 1; i >= alpha_i; i--) {
           if(swap) A1[i] = delta_tree[beta_j + 1][i];
           else A1[i] = delta_tree[i][beta_j + 1];
@@ -1538,119 +1670,56 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
 
         if(swap) {
           delta_tree[beta_j + 1][beta_i + 1] = forestdist[a1 - 1][b1 - 1];
-          if(DEBUG) {
-            ou << "initial1 delta_tree[" << beta_j + 1 << ", " << beta_i + 1 << "] = " << delta_tree[beta_j + 1][beta_i + 1] << endl;
-          }
+
         } else {
           delta_tree[beta_i + 1][beta_j + 1] = forestdist[a1 - 1][b1 - 1];
-          if(DEBUG) {
-            ou << "initial1 delta_tree[" << beta_i + 1 << ", " << beta_j + 1 << "] = " << delta_tree[beta_i + 1][beta_j + 1] << endl;
-          }
+
         }
 
 
-        for(int i = a1_plus_aoff_in_original_preLs.size() - 1; i >=0; i--) {
+        for(int i = a1_plus_aoff_in_original_preLs.size() - 1; i >= 0; i--) {
           int u = a1_plus_aoff_in_original_preLs[i];
-          vector<Node*> children = (*cG)[b1_plus_boff_in_compressed_preL]->getChildren();
+     
           float da = (swap? (delta_tree[beta_j + 1][u + 1] + costModel_.ins((*F)[u]->getLabel())) : (delta_tree[u + 1][beta_j + 1] + costModel_.del((*F)[u]->getLabel())));
-          if(DEBUG) {
-            ou << "delete " << (*F)[u]->getLabel() << "(" << u << ")" << endl;
-            if(swap) {
-              ou << "delta_tree[" << beta_j + 1 << ", " << u << "] = " << delta_tree[beta_j + 1][u] << endl;
-            } else {
-              ou << "delta_tree[" << u << ", " << beta_j + 1 << "] = " << delta_tree[u][beta_j + 1] << endl;
-            }
-          }
-          float min = FLT_MAX;
-          for(int k = 0; k < children.size(); k++) {
-            int q = children[k]->getID();
+       
+          float min = da;
+          for(int k = 0; k < Gchildren.size(); k++) {
+            int q = Gchildren[k]->getID();
             int q_in_original = cG->compressed_to_original[q][0];
             float t = (swap? (delta_tree[q_in_original][u] - G->preL_to_sumDelCost[q_in_original]) : (delta_tree[u][q_in_original] - G->preL_to_sumInsCost[q_in_original]));
-            if(DEBUG) {
-              ou << "replace " << (*F)[u]->getLabel() << "(" << u << ") to " << (*G)[q_in_original]->getLabel() << "(" << q_in_original << ")" << endl; 
-              if(swap) {
-                ou << "delta_tree[" << q_in_original << ", " << u << "] = " << delta_tree[q_in_original][u] << endl;
-              } else {
-                ou << "delta_tree[" << u << ", " << q_in_original << "] = " << delta_tree[u][q_in_original] << endl;
-              }
-            }
+   
             if(t < min) {
               min = t;
             }
           }
           min += (swap? (G->preL_to_sumDelCost[beta_j] - costModel_.del((*G)[beta_j]->getLabel())) : (G->preL_to_sumInsCost[beta_j] - costModel_.ins((*G)[beta_j]->getLabel())));
-
-          if(da < min) {
-            min = da;
-          }
-        
+   
           if(swap) {
             delta_tree[beta_j + 1][u] = min;
-            if(DEBUG) {
-              ou << "initial2 delta_tree[" << beta_j + 1 << ", " << u << "] = " << delta_tree[beta_j + 1][u] << endl;
-            }
-            if(i != 0) {
-              delta[beta_j][u - 1] = min;
-            }
+
           } else {
             delta_tree[u][beta_j + 1] = min;
-            if(DEBUG) {
-              ou << "initial2 delta_tree[" << u << ", " << beta_j + 1 << "] = " << delta_tree[u][beta_j + 1] << endl;
-            }
-            if(i != 0) {
-              delta[u - 1][beta_j] = min;
-            }
           }
         }
 
         for(int j = b1_plus_boff_in_original_preLs.size() - 1; j >= 0; j--) {
           int v = b1_plus_boff_in_original_preLs[j];
-          vector<Node*> children = (*cF)[a1_plus_aoff_in_compressed_preL]->getChildren();
-          if(DEBUG) {
-            ou << "a1_plus_aoff_in_compressed_preL = " << a1_plus_aoff_in_compressed_preL << endl;
-          }
+
           float da = (swap? (delta_tree[v + 1][beta_i + 1] + costModel_.del((*G)[v]->getLabel())) : (delta_tree[beta_i + 1][v + 1] + costModel_.ins((*G)[v]->getLabel())));
-          float min = FLT_MAX;
-          for(int k = 0; k < children.size(); k++) {
-            int q = children[k]->getID();
+          float min = da;
+          for(int k = 0; k < Fchildren.size(); k++) {
+            int q = Fchildren[k]->getID();
             int q_in_original = cF->compressed_to_original[q][0];
             float t = (swap? (delta_tree[v][q_in_original] - F->preL_to_sumInsCost[q_in_original]) : (delta_tree[q_in_original][v] - F->preL_to_sumDelCost[q_in_original]));
-             if(DEBUG) {
-              ou << "replace " << (*G)[v]->getLabel() << "(" << v << ") to " << (*F)[q_in_original]->getLabel() << "(" << q_in_original << ")" << endl; 
-              if(swap) {
-                ou << "delta_tree[" << q_in_original << ", " << v << "] = " << delta_tree[q_in_original][v] << endl;
-              } else {
-                ou << "delta_tree[" << v << ", " << q_in_original << "] = " << delta_tree[v][q_in_original] << endl;
-              }
-            }
             if(t < min) {
               min = t;
             }
           }
           min += (swap? (F->preL_to_sumInsCost[beta_i] - costModel_.ins((*F)[beta_i]->getLabel())) : (F->preL_to_sumDelCost[beta_i] - costModel_.del((*F)[beta_i]->getLabel())));
-          if(DEBUG) {
-            ou << "min = " << min << endl;
-          }
-          if(da < min) {
-            min = da;
-          }
-
           if(swap) {
             delta_tree[v][beta_i + 1] = min;
-            if(DEBUG) {
-              ou << "initial3 delta_tree[" << v << ", " << beta_i + 1 << "] = " << delta_tree[v][beta_i + 1] << endl;
-            }
-            if(j != 0) {
-              delta[v - 1][beta_i - 1] = min;
-            }
           } else {
             delta_tree[beta_i + 1][v] = min;
-            if(DEBUG) {
-              ou << "initial3 delta_tree[" << beta_i + 1 << ", " << v << "] = " << delta_tree[beta_i + 1][v] << endl;
-            }
-            if(j != 0) {
-              delta[beta_i][v - 1] = min;
-            }
           }
         }
 
@@ -1659,40 +1728,18 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
             int u = a1_plus_aoff_in_original_preLs[i];
             int v = b1_plus_boff_in_original_preLs[j];
             float da = (swap? (delta_tree[v][u + 1] + costModel_.ins((*F)[u]->getLabel())) : (delta_tree[u + 1][v] + costModel_.del((*F)[u]->getLabel())));
-            if(DEBUG) {
-              ou << "da = delta_tree[";
-              if(swap) ou << v << ", " << u + 1 << "] =" << delta_tree[v][u + 1] << endl;
-              else ou << u + 1 << ", " << v << "] = " << delta_tree[u + 1][v] << endl;
-            }
+
             float db = (swap? (delta_tree[v + 1][u] + costModel_.del((*G)[v]->getLabel())) : (delta_tree[u][v + 1] + costModel_.ins((*G)[v]->getLabel())));
-            if(DEBUG) {
-              ou << "db = delta_tree[";
-              if(swap) ou << v + 1 << ", " << u << "] =" << delta_tree[v + 1][u] << endl;
-              else ou << u << ", " << v + 1 << "] = " << delta_tree[u][v + 1] << endl;
-            }
+
             float dc = (swap? (delta_tree[v + 1][u + 1] + costModel_.ren((*G)[v]->getLabel(), (*F)[u]->getLabel())) : (delta_tree[u + 1][v + 1] + costModel_.ren((*F)[u]->getLabel(), (*G)[v]->getLabel())));
-            if(DEBUG) {
-              ou << "dc = delta_tree[";
-              if(swap) ou << v + 1 << ", " << u + 1 << "] =" << delta_tree[v + 1][u + 1] << endl;
-              else ou << u + 1 << ", " << v + 1 << "] = " << delta_tree[u + 1][v + 1] << endl;
-            }
+
             float min = da >= db ? db >= dc ? dc : db : da >= dc ? dc : da;
-            if(DEBUG) {
-              ou << "da = " << da << endl;
-              ou << "db = " << db << endl;
-              ou << "dc = " << dc << endl;
-            }
+
 
             if(swap) {
               delta_tree[v][u] = min;
-              if(DEBUG) {
-                ou << "delta_tree[" << v << ", " << u << "] = " << delta_tree[v][u] << endl;
-              }
             } else {
               delta_tree[u][v] = min;
-              if(DEBUG) {
-                ou << "delta_tree[" << u << ", " << v << "] = " << delta_tree[u][v] << endl;
-              }
             }
           }
         }
@@ -1717,6 +1764,8 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
           if(swap) delta_tree[j][beta_i + 1] = A2[j];
           else delta_tree[beta_i + 1][j] = A2[j];
         }
+*/
+
       } else {// forest means have computed
         float da = forestdist[a1 - 1][b1] + (swap? cF->preL_to_InsCost[a1_plus_aoff_in_compressed_preL] : cF->preL_to_DelCost[a1_plus_aoff_in_compressed_preL]);
 
@@ -1730,11 +1779,14 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
           ou << "forestdist[" << a1 << ", " << b1 << "] = " << forestdist[a1][b1] << endl;
         }
       }
+
       dist = forestdist[a1][b1];
     }
   }
   return dist;
 }
+
+
 
 // postL all the trees on the left have already computed
 // postR all the trees on the right have already computed
