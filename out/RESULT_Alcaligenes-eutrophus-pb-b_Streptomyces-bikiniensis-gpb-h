@@ -1,24 +1,24 @@
 RNA1:
 RNAName: Alcaligenes-eutrophus-pb-b
-RNASize: 83
+RNASize: 70
 RNA Sequence
-AAUCCCAAAUAGGCAGGCGAUGAAGCGGCCCGCUGAGUCUGCGGGUAGGGAGCUGGAGCCGGCUGGUAACAGCCGGCCUAG
+UGAUAAGCAGAAAACUGAGCAUCAGGUUCUGGGCCAUUCGUGUCAUCCCUGUGUGUAGGGGUAUAUCG
 
 RNA2:
 RNAName: Streptomyces-bikiniensis-gpb-h
-RNASize: 80
+RNASize: 74
 RNA Sequence
-AAGGUCAAGAGGGGACACCCCGGUGUCCCUGCGCGGAUGUUCGAGGGCUGCUCGCCCGAGUCCGCGGGUAGACCGCAC
+AUCCGACCAAUGUCGAUUACCACAAUGGAUGCCUACCCAAGUUCGCUUGACCUGGAUCCCAUUCGGGUGGAU
 
-The distance is 44 #Subproblem: 21175
-The edit distance count(For debug use) is 44
+The distance is 43 #Subproblem: 8542
+The edit distance count(For debug use) is 43
 
---((((--------------------------((((((----((-(((-----)))-))))))))-----))))------((((((((----))))))))----
---((((----((((((((----))))))))--((((((----((((((-----))))))))))))-----))))------------------------------
-AAUCCCAA-A--------UA-G----------GCAGGCGAU-GA-AGCGGCCCGCU-GAGUCUGCGGGUAGGGAGCUGGAGCCGGCUGGUAACAGCCGGCCUAG
-AAGGUCAAGAGGGGACACCCCGGUGUCCCUGCGCGGAUGUUCGAGGGCUGCUCGCCCGAGUCCGCGGGUAGACCGC---A--------------------C---
+(((((--(-((----))-)---(-((((---)))((----)))-)---((-(((-((-----))-)----------------))-))-)))))
+--(((--((((----))))---(((---------((----)))))----((((((((-----))))---(((((---)))))))))--)))--
+UGAUAAGC-AGAAAACU-GAGCA-UCAGGUUCUGGGCCAUUCG-UGUCAU-CCC-UGUGU-GUA-G----------------GG-GUAUAUCG
+--AUC--CGACCAAUGUCG---AUU---AC----CACAA-UGGAUGCC-UACCCAAGU-UCGCUUGACCUGGAUCCCAUUCGGGUG--GAU--
 
-The distance_ND(For debug use) is 44 #Subproblem: 21190
-The distance(LL)(For debug use) is 44 #Subproblem: 28208
-The distance(LL_compressed)(For debug use) is 44 #Subproblem: 12430
-The distance(RR)(For debug use) is 44 #Subproblem: 25110
+The distance_ND(For debug use) is 43 #Subproblem: 8542
+The distance(LL)(For debug use) is 43 #Subproblem: 11544
+The distance(LL_compressed)(For debug use) is 43 #Subproblem: 5476
+The distance(RR)(For debug use) is 43 #Subproblem: 9568

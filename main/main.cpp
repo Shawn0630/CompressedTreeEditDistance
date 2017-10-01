@@ -15,7 +15,7 @@ using namespace std;
 int main(int argc, char *argv[]) {
 	string fileName = "";
 	if(argc == 1) {
-		fileName = "rna16.data";
+		fileName = "rna23.data";
 		cout << "No input RNA file, use the default file(rna16.data)" << endl;
 	} else {
 		fileName = argv[1];
@@ -56,7 +56,11 @@ int main(int argc, char *argv[]) {
 		ou << t2->toString() << endl;
 	}
 
+
+
 	tc.strategyComputation();
+
+
 
 	float dist = tc.getTreeDistance();
 	out << "The distance is " << dist << " #Subproblem: " << tc.getCounter() << endl;
@@ -88,6 +92,10 @@ int main(int argc, char *argv[]) {
 	float dist_RR = tc.getTreeDistance_RR();
 	cout << "The distance(RR)(For debug use) is " << dist_RR << " #Subproblem: " << tc.getCounter() << endl;
 	out << "The distance(RR)(For debug use) is " << dist_RR << " #Subproblem: " << tc.getCounter() << endl;
+
+	float dist_RR_compressed = tc.getTreeDistance_RR_compressed();
+	cout << "The distance(RR_compressed)(For debug use) is " << dist_RR_compressed << " #Subproblem: " << tc.getCounter() << endl;
+	out << "The distance(RR_compressed)(For debug use) is " << dist_RR_compressed << " #Subproblem: " << tc.getCounter() << endl;
 
 
 

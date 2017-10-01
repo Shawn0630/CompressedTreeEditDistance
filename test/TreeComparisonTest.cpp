@@ -88,6 +88,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     2);
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
+    2);
   cout << "Operation count: " << map->getCount() << endl;     
   cout << "Pass" << endl;
 
@@ -130,6 +133,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     1); 
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
+    1);
   cout << "Operation count: " << map->getCount() << endl;
   cout << "Pass" << endl;
 
@@ -173,6 +179,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     2); 
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
+    2);
   cout << map->toString();
   cout << "Operation count: " << map->getCount() << endl;
   cout << "Pass" << endl;
@@ -218,7 +227,10 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   cout << "Operation count: " << map->getCount() << endl;
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
-    3);       
+    3);
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
+    3);        
   cout << map->toString();
   cout << "Operation count: " << map->getCount() << endl;
   cout << "Pass" << endl;
@@ -263,6 +275,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     3);
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
+    3);
   cout << map->toString();
   cout << "Operation count: " << map->getCount() << endl;
   cout << "Pass" << endl; 
@@ -306,6 +321,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     12);
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
+    12);
   cout << "Pass" << endl; 
 
 
@@ -346,6 +364,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     13);
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
+    13);
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
     13);
   cout << "Pass" << endl;
 
@@ -388,6 +409,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     7);
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
+    7);
   cout << "Pass" << endl;
 
 
@@ -428,6 +452,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     6);
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
+    6);
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
     6);
   cout << "Pass" << endl;
 
@@ -470,6 +497,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     5);
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
+    5);
   cout << "Pass" << endl;
 
 
@@ -510,6 +540,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     2);
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
+    2);
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
     2);
   cout << "Pass" << endl;
 
@@ -553,6 +586,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     2);
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
+    2);
   cout << "Pass" << endl;
 
   cout << "Test case #13" << endl;
@@ -593,6 +629,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     4);    
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
+    4);
   cout << "Pass" << endl;
 
 
@@ -634,6 +673,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
     1); 
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
+    1);
   cout << "Pass" << endl;
 
 
@@ -674,7 +716,10 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     3); 
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
-    3); 
+    3);
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
+    3);    
   cout << "Pass" << endl;
 
 
@@ -715,6 +760,9 @@ TEST_F(TreeComparisonTest, getTreeEditDistance) {
     6); 
   ASSERT_EQ(\
     tc.getTreeDistance_RR(),\
+    6);
+  ASSERT_EQ(\
+    tc.getTreeDistance_RR_compressed(),\
     6); 
   cout << "Pass" << endl;
 

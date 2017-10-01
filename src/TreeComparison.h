@@ -87,17 +87,19 @@ private:
 	float spfL(Node*, Node*, int, bool);
 	float spfLL(Node*, Node*, int, bool);
 	float spfLL_compressed(Node*, Node*, int, bool);
+	float spfRR_compressed(Node*, Node*, int, bool);
 	float spfR(Node*, Node*, int, bool);
 	float spfRR(Node*, Node*, int, bool);
 	float spf1(Node*, int, Node*, int);
 
 	int computeKeyRoots(Tree*, Node*, int, int*, int);
 	int computeKeyRoots_compressed(CompressedTree*, Node*, int, int*, int);
-	float treeEditDist_compressed_tree_tree(Node*, Node*, float, float**, bool);
+	float treeEditDist_compressed_tree_tree(Node*, Node*, float, bool);
 	int computeRevKeyRoots(Tree*, Node*, int, int*, int);
 	float treeEditDist(Node*, Node*, float**, bool, bool);
 	float treeEditDist_compressed(Node*, Node*, bool);
-	float revTreeEditDist(Node*, Node*, float**, bool, bool);	
+	float revTreeEditDist(Node*, Node*, float**, bool, bool);
+	float revTreeEditDist_compressed(Node*, Node*, bool);	
 
 	Strategy** APTED_ComputeOptStrategy_postL();
 
@@ -120,6 +122,7 @@ public:
 	float getTreeDistance(void);
 	float getTreeDistance_LL(void);
 	float getTreeDistance_LL_compressed(void);
+	float getTreeDistance_RR_compressed(void);
 	float getTreeDistance_RR(void);
 	float getTreeDistance_ND(void);
 	int getCounter(void);

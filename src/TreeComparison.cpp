@@ -25,11 +25,12 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
   cA_ = new CompressedTree(A_);
   cB_ = new CompressedTree(B_);
 
-
   compressedTreeSizeA = cA_->getTreeSize();
   compressedTreeSizeB = cB_->getTreeSize();
-  A1 = new float[compressedTreeSizeA + 1];
-  A2 = new float[compressedTreeSizeB + 1];
+
+
+  A1 = new float[treeSizeA + 1];
+  A2 = new float[treeSizeB + 1];
 
 	int maxSize = treeSizeA < treeSizeB? treeSizeB + 1 : treeSizeA + 1;
 	fn = new int[maxSize + 1];
@@ -68,7 +69,6 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
 	FreeStrategies = new Strategy*[treeSizeA];
 	delta = new float*[treeSizeA];
   delta_tree = new float*[treeSizeA + 1];
-	hasVisited = new bool*[treeSizeA];
 
 	for(int i = 0; i < treeSizeA; i++) {
 		Free[i] = new int[treeSizeB];
@@ -87,7 +87,6 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
 		FreeStrategies[i] = new Strategy[treeSizeB];
 		delta[i] = new float[treeSizeB];
     delta_tree[i] = new float[treeSizeB + 1];
-		hasVisited[i] = new bool[treeSizeB];
 	}
 
   delta_tree[treeSizeA] = new float[treeSizeB + 1];
@@ -109,7 +108,6 @@ TreeComparison::TreeComparison(Tree* A, Tree* B, SimiMatrix costModel) {
 			AllB[i][j] = -1;
 			delta[i][j] = 0.0f;
       delta_tree[i][j] = 0.0f;
-			hasVisited[i][j] = false;
 		}
 	}
   delta_tree[treeSizeA][treeSizeB] = 0.0f;
@@ -196,10 +194,9 @@ void TreeComparison::init(string fileName) {
   FreeStrategies = new Strategy*[treeSizeA];
   delta = new float*[treeSizeA];
   delta_tree = new float*[treeSizeA + 1];
-  hasVisited = new bool*[treeSizeA];
 
-  A1 = new float[compressedTreeSizeA + 1];
-  A2 = new float[compressedTreeSizeB + 1];
+  A1 = new float[treeSizeA + 1];
+  A2 = new float[treeSizeB + 1];
 
   for(int i = 0; i < treeSizeA; i++) {
     Free[i] = new int[treeSizeB];
@@ -218,7 +215,6 @@ void TreeComparison::init(string fileName) {
     FreeStrategies[i] = new Strategy[treeSizeB];
     delta[i] = new float[treeSizeB];
     delta_tree[i] = new float[treeSizeB + 1];
-    hasVisited[i] = new bool[treeSizeB];
   }
   delta_tree[treeSizeA] = new float[treeSizeB + 1];
 
@@ -246,7 +242,6 @@ void TreeComparison::init(string fileName) {
       AllB[i][j] = -1;
       delta[i][j] = 0.0f;
       delta_tree[i][j] = 0.0f;
-      hasVisited[i][j] = false;
     }
   }
   delta_tree[treeSizeA][treeSizeB] = 0.0f;
@@ -1203,6 +1198,34 @@ float TreeComparison::spfLL_compressed(Node* a, Node* b, int leaf, bool swap) {
   return dist;
 }
 
+float TreeComparison::spfRR_compressed(Node* a, Node* b, int leaf, bool swap) {
+  CompressedTree *cF, *cG;
+  if(swap) {
+    cF = cB_;
+    cG = cA_;
+  } else {
+    cF = cA_;
+    cG = cB_;
+  }
+  if(DEBUG) {
+    cout << "spfLL_compressed(" << a->getID() << ", " << b->getID() << ") counter = " << counter << endl;
+  }
+
+  int* cGkeyRoots = new int[b->getSubTreeSize()];
+  int cGfirstKeyRoot = computeKeyRoots_compressed(cG, b, cG->preL_to_rid[b->getID()], cGkeyRoots, 0);  
+
+  int* cFkeyRoots = new int[a->getSubTreeSize()];
+  int cFfirstKeyRoot = computeKeyRoots_compressed(cF, a, cF->preL_to_rid[a->getID()], cFkeyRoots, 0);
+
+  float dist = 0;
+  for (int i = cFfirstKeyRoot - 1; i >= 0; i--) {
+    for (int j = cGfirstKeyRoot - 1; j >= 0; j--) {
+      dist = revTreeEditDist_compressed((*cF)[cFkeyRoots[i]], (*cG)[cGkeyRoots[j]], swap);
+    }
+  }
+  return dist;
+}
+
 float TreeComparison::spfR(Node* a, Node* b, int leaf, bool swap) {
   Tree *F, *G;
   if(swap) {
@@ -1461,13 +1484,13 @@ float TreeComparison::treeEditDist(Node* a, Node* b, float** forestdist, bool sw
   return dist;
 }
 
-float TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float fdist, float** forestdist, bool swap) {
+float TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float fdist, bool swap) {
   if(DEBUG) {
     ou << "TreeDistance_tree_tree(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ") swap = " << swap << endl;
   }
-  if(DEBUG) {
+ /* if(DEBUG) {
     cout << "TreeDistance_tree_tree(" << to_string(a->getID()) << ", " << to_string(b->getID()) << ") swap = " << swap << endl;
-  }
+  }*/
   Tree *F, *G;
   CompressedTree *cF, *cG;
   if(swap) {
@@ -1496,13 +1519,20 @@ float TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float 
   vector<Node*> Gchildren = b->getChildren();
 
 
-  for(int i = beta_i + 1; i >= alpha_i; i--) {
-    if(swap) A1[i] = delta_tree[beta_j + 1][i];
-    else A1[i] = delta_tree[i][beta_j + 1];
-  }
-  for(int j = beta_j; j >= alpha_j; j--) {
-    if(swap) A2[j] = delta_tree[j][beta_i + 1];
-    else A2[j] = delta_tree[beta_i + 1][j];
+  if(swap) {
+    for(int j = beta_j + 1; j >= alpha_j; j--) {
+      A1[j] = delta_tree[j][beta_i + 1];
+    }
+    for(int i = beta_i + 1; i >= alpha_i; i--) {
+      A2[i] = delta_tree[beta_j + 1][i];
+    }
+  } else {
+    for(int i = beta_i + 1; i >= alpha_i; i--) {
+      A1[i] = delta_tree[i][beta_j + 1];
+    }
+    for(int j = beta_j + 1; j >= alpha_j; j--) {
+      A2[j] = delta_tree[beta_i + 1][j];
+    }
   }
 
 
@@ -1579,24 +1609,33 @@ float TreeComparison::treeEditDist_compressed_tree_tree(Node* a, Node* b, float 
     delta_compressed_tree[a->getID()][b->getID()] = delta_tree[alpha_i][alpha_j];
   }
 
-  for(int i = beta_i + 1; i >= alpha_i; i--) {
-    if(swap) delta_tree[beta_j + 1][i] = A1[i];
-    else delta_tree[i][beta_j + 1] = A1[i];
-  }
-  for(int j = beta_j; j >= alpha_j; j--) {
-    if(swap) delta_tree[j][beta_i + 1] = A2[j];
-    else delta_tree[beta_i + 1][j] = A2[j];
-  }
 
   if(swap) {
-    if(DEBUG) {
-      cout << "delta_tree[" << alpha_j << ", " << alpha_i << "] = " << delta_tree[alpha_j][alpha_i] << endl;
+    for(int j = beta_j + 1; j >= alpha_j; j--) {
+      delta_tree[j][beta_i + 1] = A2[j];
     }
+    for(int i = beta_i + 1; i >= alpha_i; i--) {
+      delta_tree[beta_j + 1][i] = A2[i];
+    }
+  } else {
+    for(int i = beta_i + 1; i >= alpha_i; i--) {
+      delta_tree[i][beta_j + 1] = A1[i];
+    }
+    for(int j = beta_j + 1; j >= alpha_j; j--) {
+      delta_tree[beta_i + 1][j] = A2[j];
+    }
+  }
+
+
+  if(swap) {
+    /*if(DEBUG) {
+      cout << "delta_tree[" << alpha_j << ", " << alpha_i << "] = " << delta_tree[alpha_j][alpha_i] << endl;
+    }*/
     return delta_tree[alpha_j][alpha_i];
   } else {
-    if(DEBUG) {
+    /*if(DEBUG) {
       cout << "delta_tree[" << alpha_i << ", " << alpha_j << "] = " << delta_tree[alpha_i][alpha_j] << endl;
-    }
+    }*/
     return delta_tree[alpha_i][alpha_j];
   }
 }
@@ -1674,7 +1713,7 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
           if(DEBUG) {
             cout << "a1_plus_aoff_in_compressed_preL = " << a1_plus_aoff_in_compressed_preL << ", b1_plus_boff_in_compressed_preL = " << b1_plus_boff_in_compressed_preL << endl;
           }
-          forestdist[a1][b1] = treeEditDist_compressed_tree_tree((*cF)[a1_plus_aoff_in_compressed_preL], (*cG)[b1_plus_boff_in_compressed_preL], forestdist[a1 - 1][b1 - 1], forestdist, swap);   
+          forestdist[a1][b1] = treeEditDist_compressed_tree_tree((*cF)[a1_plus_aoff_in_compressed_preL], (*cG)[b1_plus_boff_in_compressed_preL], forestdist[a1 - 1][b1 - 1], swap);   
           if(DEBUG) {
             cout << "forestdist[" << a1 << ", " << b1 << "] = " << forestdist[a1][b1] << endl;
           }
@@ -1692,6 +1731,101 @@ float TreeComparison::treeEditDist_compressed(Node* a, Node* b, bool swap) {
       dist = forestdist[a1][b1];
     }
   }
+
+  return dist;
+}
+
+float TreeComparison::revTreeEditDist_compressed(Node* a, Node* b, bool swap) {
+
+  Tree *F, *G;
+  CompressedTree *cF, *cG;
+  if(swap) {
+    F = B_;
+    cF = cB_;
+    G = A_;
+    cG = cA_;
+  } else {
+    F = A_;
+    cF = cA_;
+    G = B_;
+    cG = cB_;
+  }
+
+  float** forestdist = new float*[a->getSubTreeSize() + 1];//consider the null
+  for(int i = 0; i < a->getSubTreeSize() + 1; i++) {//consider the null
+    forestdist[i] = new float[b->getSubTreeSize() + 1];
+  }
+
+  int a_in_compressed_in_preL = a->getID();
+  int b_in_compressed_in_preL = b->getID();
+
+  int a_in_compressed_in_postR = cF->preL_to_postR[a_in_compressed_in_preL];
+  int b_in_compressed_in_postR = cG->preL_to_postR[b_in_compressed_in_preL];
+
+  int a_rightmost_leaf_in_compressed_in_preL = cF->preL_to_rid[a_in_compressed_in_preL];
+  int b_rightmost_leaf_in_compressed_in_preL = cG->preL_to_rid[b_in_compressed_in_preL];
+
+  int a_rightmost_leaf_in_compressed_in_postR = cF->preL_to_postR[a_rightmost_leaf_in_compressed_in_preL];
+  int b_rightmost_leaf_in_compressed_in_postR = cG->preL_to_postR[b_rightmost_leaf_in_compressed_in_preL];
+
+  int aoff = a_rightmost_leaf_in_compressed_in_postR- 1;//not tree-tree distance but tree-tree remove the root
+  int boff = b_rightmost_leaf_in_compressed_in_postR - 1;//not tree-tree distance but tree-tree remove the root
+
+
+  float da = 0;
+  float db = 0;
+  float dc = 0;
+  float dist = 0;
+
+  forestdist[0][0] = 0;
+  for (int a1 = 1; a1 <= a_in_compressed_in_postR - aoff; a1++) {
+    int a1_plus_aoff_in_preL = cF->postR_to_preL[a1 + aoff];
+    forestdist[a1][0] = forestdist[a1 - 1][0] + (swap ? cF->preL_to_InsCost[a1_plus_aoff_in_preL]: cF->preL_to_DelCost[a1_plus_aoff_in_preL]); // USE COST MODEL - delete a1.
+  }
+
+  for (int b1 = 1; b1 <= b_in_compressed_in_postR - boff; b1++) {
+    int b1_plus_boff_in_preL = cG->postR_to_preL[b1 + boff];
+    forestdist[0][b1] = forestdist[0][b1 - 1] + (swap ? cG->preL_to_DelCost[b1_plus_boff_in_preL] : cG->preL_to_InsCost[b1_plus_boff_in_preL]); // USE COST MODEL - insert b1.
+  }
+
+
+    // Fill in the remaining costs.
+  for (int a1 = 1; a1 <= a_in_compressed_in_postR - aoff; a1++) {
+    for (int b1 = 1; b1 <= b_in_compressed_in_postR - boff; b1++) {
+      counter++;
+      int a1_plus_aoff_in_compressed_preL = cF->postR_to_preL[a1 + aoff];
+      int b1_plus_boff_in_compressed_preL = cG->postR_to_preL[b1 + boff];
+
+  
+      // If current subforests are subtrees. 
+      int a1_rightmost_leaf_in_compressed = cF->preL_to_lid[a1_plus_aoff_in_compressed_preL];
+      int b1_rightmost_leaf_in_compressed = cG->preL_to_lid[b1_plus_boff_in_compressed_preL];
+      int a1_rightmost_leaf_in_compressed_postR = cF->preL_to_postR[a1_rightmost_leaf_in_compressed];
+      int b1_rightmost_leaf_in_compressed_postR = cG->preL_to_postR[b1_rightmost_leaf_in_compressed];
+
+      if (a_rightmost_leaf_in_compressed_in_preL == a1_rightmost_leaf_in_compressed && b_rightmost_leaf_in_compressed_in_preL == b1_rightmost_leaf_in_compressed) {//is a tree means haven't computed
+          if(DEBUG) {
+            cout << "a1_plus_aoff_in_compressed_preL = " << a1_plus_aoff_in_compressed_preL << ", b1_plus_boff_in_compressed_preL = " << b1_plus_boff_in_compressed_preL << endl;
+          }
+          forestdist[a1][b1] = treeEditDist_compressed_tree_tree((*cF)[a1_plus_aoff_in_compressed_preL], (*cG)[b1_plus_boff_in_compressed_preL], forestdist[a1 - 1][b1 - 1], swap);   
+          if(DEBUG) {
+            cout << "forestdist[" << a1 << ", " << b1 << "] = " << forestdist[a1][b1] << endl;
+          }
+      } else {// forest means have computed
+        float da = forestdist[a1 - 1][b1] + (swap? cF->preL_to_InsCost[a1_plus_aoff_in_compressed_preL] : cF->preL_to_DelCost[a1_plus_aoff_in_compressed_preL]);
+        float db = forestdist[a1][b1 - 1] + (swap? cG->preL_to_DelCost[b1_plus_boff_in_compressed_preL] : cG->preL_to_InsCost[b1_plus_boff_in_compressed_preL]);
+        float dc = forestdist[a1_rightmost_leaf_in_compressed_postR - 1 - aoff][b1_rightmost_leaf_in_compressed_postR - 1 - boff] + (swap? delta_compressed_tree[b1_plus_boff_in_compressed_preL][a1_plus_aoff_in_compressed_preL] : delta_compressed_tree[a1_plus_aoff_in_compressed_preL][b1_plus_boff_in_compressed_preL]);        
+        float min = da >= db ? db >= dc ? dc : db : da >= dc ? dc : da;
+        forestdist[a1][b1] = min;
+        if(DEBUG) {
+          ou << "forestdist[" << a1 << ", " << b1 << "] = " << forestdist[a1][b1] << endl;
+        }
+      }
+
+      dist = forestdist[a1][b1];
+    }
+  }
+
   return dist;
 }
 
@@ -5035,7 +5169,7 @@ float TreeComparison::getTreeDistance_LL(void) {
     }
   }
   treeDist = spfLL(preA[0], preB[0], A_->preL_to_lid[preA[0]->getID()], false);
-  if(DEBUG) {
+  //if(DEBUG) {
     ou << "delta Result LL" << endl;
     for(int i = 0; i < treeSizeA; i++) {
       for(int j = 0; j < treeSizeB; j++) {
@@ -5044,7 +5178,7 @@ float TreeComparison::getTreeDistance_LL(void) {
       ou << endl;
     }
     ou << endl;
-  }
+  //}
   if(DEBUG) {
     cout << "counter = " << counter << " Free[0][0] = " << Free[0][0] << endl;
   }
@@ -5063,7 +5197,7 @@ float TreeComparison::getTreeDistance_LL_compressed(void) {
     }
   }
   treeDist = spfLL_compressed(preA[0], preB[0], A_->preL_to_lid[preA[0]->getID()], false);
-  if(DEBUG) {
+  //if(DEBUG) {
     ou << "delta Result LL_compressed" << endl;
     ou << "delta_tree" << endl;
     for(int i = 0; i <= treeSizeA; i++) {
@@ -5081,7 +5215,44 @@ float TreeComparison::getTreeDistance_LL_compressed(void) {
       ou << endl;
     }
     ou << endl;
+  //}
+  if(DEBUG) {
+    cout << "counter = " << counter << " Free[0][0] = " << Free[0][0] << endl;
   }
+  //ou.close();
+  return treeDist;
+};
+
+float TreeComparison::getTreeDistance_RR_compressed(void) {
+  vector<Node*> preA = cA_->getPreL();
+  vector<Node*> preB = cB_->getPreL();
+  counter = 0;
+  map->init();
+  for(int i = 0; i < treeSizeA; i++) {
+    for(int j = 0; j < treeSizeB; j++) {
+      delta[i][j] = 0.0f;
+    }
+  }
+  treeDist = spfRR_compressed(preA[0], preB[0], A_->preL_to_lid[preA[0]->getID()], false);
+  //if(DEBUG) {
+    ou << "delta Result RR_compressed" << endl;
+    ou << "delta_tree" << endl;
+    for(int i = 0; i <= treeSizeA; i++) {
+      for(int j = 0; j <= treeSizeB; j++) {
+        ou << delta_tree[i][j] << " ";
+      }
+      ou << endl;
+    }
+    ou << endl;
+    ou << "delta_compressed_tree" << endl;
+    for(int i = 0; i <= compressedTreeSizeA; i++) {
+      for(int j = 0; j <= compressedTreeSizeB; j++) {
+        ou << delta_compressed_tree[i][j] << " ";
+      }
+      ou << endl;
+    }
+    ou << endl;
+  //}
   if(DEBUG) {
     cout << "counter = " << counter << " Free[0][0] = " << Free[0][0] << endl;
   }

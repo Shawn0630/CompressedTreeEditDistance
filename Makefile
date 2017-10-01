@@ -80,7 +80,7 @@ CXXFLAGS     = $(CFLAGS)
 GTESTLIBS = -lgtest -lgtest_main -lpthread
 
 # The linker options for C programs.
-CLDFLAGS     = -g3 -O0 #-pg
+CLDFLAGS     = -g3 -O2 #-pg
 
 # The linker options for C++ programs.
 CXXLDFLAGS   = $(CLDFLAGS)
