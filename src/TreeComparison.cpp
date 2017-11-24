@@ -1768,7 +1768,7 @@ float TreeComparison::revTreeEditDist_compressed(Node* a, Node* b, bool swap) {
   int a_rightmost_leaf_in_compressed_in_postR = cF->preL_to_postR[a_rightmost_leaf_in_compressed_in_preL];
   int b_rightmost_leaf_in_compressed_in_postR = cG->preL_to_postR[b_rightmost_leaf_in_compressed_in_preL];
 
-  int aoff = a_rightmost_leaf_in_compressed_in_postR- 1;//not tree-tree distance but tree-tree remove the root
+  int aoff = a_rightmost_leaf_in_compressed_in_postR - 1;//not tree-tree distance but tree-tree remove the root
   int boff = b_rightmost_leaf_in_compressed_in_postR - 1;//not tree-tree distance but tree-tree remove the root
 
 
@@ -1780,7 +1780,7 @@ float TreeComparison::revTreeEditDist_compressed(Node* a, Node* b, bool swap) {
   forestdist[0][0] = 0;
   for (int a1 = 1; a1 <= a_in_compressed_in_postR - aoff; a1++) {
     int a1_plus_aoff_in_preL = cF->postR_to_preL[a1 + aoff];
-    forestdist[a1][0] = forestdist[a1 - 1][0] + (swap ? cF->preL_to_InsCost[a1_plus_aoff_in_preL]: cF->preL_to_DelCost[a1_plus_aoff_in_preL]); // USE COST MODEL - delete a1.
+    forestdist[a1][0] = forestdist[a1 - 1][0] + (swap ? cF->preL_to_InsCost[a1_plus_aoff_in_preL] : cF->preL_to_DelCost[a1_plus_aoff_in_preL]); // USE COST MODEL - delete a1.
   }
 
   for (int b1 = 1; b1 <= b_in_compressed_in_postR - boff; b1++) {
@@ -1798,8 +1798,8 @@ float TreeComparison::revTreeEditDist_compressed(Node* a, Node* b, bool swap) {
 
   
       // If current subforests are subtrees. 
-      int a1_rightmost_leaf_in_compressed = cF->preL_to_lid[a1_plus_aoff_in_compressed_preL];
-      int b1_rightmost_leaf_in_compressed = cG->preL_to_lid[b1_plus_boff_in_compressed_preL];
+      int a1_rightmost_leaf_in_compressed = cF->preL_to_rid[a1_plus_aoff_in_compressed_preL];
+      int b1_rightmost_leaf_in_compressed = cG->preL_to_rid[b1_plus_boff_in_compressed_preL];
       int a1_rightmost_leaf_in_compressed_postR = cF->preL_to_postR[a1_rightmost_leaf_in_compressed];
       int b1_rightmost_leaf_in_compressed_postR = cG->preL_to_postR[b1_rightmost_leaf_in_compressed];
 
