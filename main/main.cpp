@@ -62,9 +62,12 @@ int main(int argc, char *argv[]) {
 	}
 
 
-
+	beginTime = clock();
 	tc.strategyComputation();
-
+	endTime = clock();
+	duration = (endTime - beginTime) / (double)CLOCKS_PER_SEC;
+	out << "Process Time is " << duration << endl;
+	cout << "Process Time is " << duration << endl;
 
 
 	float dist = tc.getTreeDistance();
@@ -82,14 +85,14 @@ int main(int argc, char *argv[]) {
 	}
 	out << endl;
 
-/*	beginTime = clock();
+	/*beginTime = clock();
 	float dist_ND = tc.getTreeDistance_ND();
 	cout << "The distance_ND(For debug use) is " << dist_ND << " #Subproblem: " << tc.getCounter() << endl;
 	out << "The distance_ND(For debug use) is " << dist_ND << " #Subproblem: " << tc.getCounter() << endl;
 	endTime = clock();
 	duration = (endTime - beginTime) / (double)CLOCKS_PER_SEC;
 	out << "Process Time is " << duration << endl;
-	cout << "Process Time is " << duration << endl;*/
+	cout << "Process Time is " << duration << endl;
 
 	beginTime = clock();
 	float dist_LL = tc.getTreeDistance_LL();
@@ -100,26 +103,26 @@ int main(int argc, char *argv[]) {
 	out << "Process Time is " << duration << endl;
 	cout << "Process Time is " << duration << endl;
 
-/*	beginTime = clock();
+	beginTime = clock();
 	float dist_LL_compressed = tc.getTreeDistance_LL_compressed();
 	cout << "The distance(LL_compressed)(For debug use) is " << dist_LL_compressed << " #Subproblem: " << tc.getCounter() << endl;
 	out << "The distance(LL_compressed)(For debug use) is " << dist_LL_compressed << " #Subproblem: " << tc.getCounter() << endl;
 	endTime = clock();
 	duration = (endTime - beginTime) / (double)CLOCKS_PER_SEC;
 	out << "Process Time is " << duration << endl;
-	cout << "Process Time is " << duration << endl;*/
+	cout << "Process Time is " << duration << endl;
 
 
-/*	beginTime = clock();
+	beginTime = clock();
 	float dist_RR = tc.getTreeDistance_RR();
 	cout << "The distance(RR)(For debug use) is " << dist_RR << " #Subproblem: " << tc.getCounter() << endl;
 	out << "The distance(RR)(For debug use) is " << dist_RR << " #Subproblem: " << tc.getCounter() << endl;
 	endTime = clock();
 	duration = (endTime - beginTime) / (double)CLOCKS_PER_SEC;
 	out << "Process Time is " << duration << endl;
-	cout << "Process Time is " << duration << endl;*/
+	cout << "Process Time is " << duration << endl;
 
-/*	beginTime = clock();
+	beginTime = clock();
 	float dist_RR_compressed = tc.getTreeDistance_RR_compressed();
 	cout << "The distance(RR_compressed)(For debug use) is " << dist_RR_compressed << " #Subproblem: " << tc.getCounter() << endl;
 	out << "The distance(RR_compressed)(For debug use) is " << dist_RR_compressed << " #Subproblem: " << tc.getCounter() << endl;
